@@ -5,6 +5,13 @@ import io
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout", page_icon="⚽", layout="wide")
 
+# Título principal
+st.header("Carga tus archivos de datos de jugadores")
+
+# Enlace a Google Drive
+st.write("Para obtener los archivos de datos de jugadores, puedes descargarlos desde el siguiente enlace de Google Drive:")
+st.markdown("[Descargar archivos](https://drive.google.com/drive/folders/1NEiWvBhLzjJ0hc_KGSpFnKXUnrvH8UhH?usp=sharing)")
+
 # Cargar los archivos de datos
 def load_data():
     if 'data' not in st.session_state:

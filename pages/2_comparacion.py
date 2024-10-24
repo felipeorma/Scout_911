@@ -21,7 +21,7 @@ metrics_by_position = {
                       "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", "Received passes per 90", 
                       "Accurate short / medium passes, %", "Accurate passes to final third, %", 
                       "Accurate long passes, %", "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
-    'Extremos': ["Team within selected timeframe", "Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
+    'Extremos': ["Team", "Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
                  "xA per 90", "Received passes per 90", "Accurate crosses, %", "Accurate through passes, %", 
                  "Accurate progressive passes, %", "Crosses to goalie box per 90", "Accurate passes to penalty area, %", 
                  "Offensive duels won, %", "Defensive duels won, %", "Interceptions per 90", "Successful dribbles, %"],

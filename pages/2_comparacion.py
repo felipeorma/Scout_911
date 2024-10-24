@@ -131,6 +131,8 @@ metrics_by_position = {
     }
 }
 
+
+
 # Función para obtener los datos cargados desde session_state
 def get_data():
     return st.session_state.data if 'data' in st.session_state else None
@@ -147,12 +149,13 @@ def calcular_metricas_ajustadas(df, metricas):
         
         # Para cada métrica, aplicar la operación correspondiente (suma o promedio)
         for metrica, operacion in metricas.items():
-            if operacion == 'avg':
-                resultado_jugador[metrica] = jugador_df[metrica].mean()
-            elif operacion == 'sum':
-                resultado_jugador[metrica] = jugador_df[metrica].sum()
-            elif operacion == 'ignore':
-                continue
+            if metrica in jugador_df.columns:
+                if operacion == 'avg':
+                    resultado_jugador[metrica] = jugador_df[metrica].mean()
+                elif operacion == 'sum':
+                    resultado_jugador[metrica] = jugador_df[metrica].sum()
+            else:
+                st.warning(f"Métrica {metrica} no encontrada en los datos para {jugador}. Omitiendo...")
         
         datos_ajustados.append(resultado_jugador)
 
@@ -188,7 +191,7 @@ def comparacion():
             st.warning("No se encontraron métricas disponibles para la posición seleccionada.")
             return
         
-# Filtrar los jugadores seleccionados y las métricas seleccionadas
+        # Filtrar los jugadores seleccionados y las métricas seleccionadas
         df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)][columnas_existentes]
 
         # Aplicar promedios o sumas según corresponda
@@ -222,19 +225,20 @@ def comparacion():
         
         # Agregar las métricas como filas
         for metrica in metricas_seleccionadas:
-            table_html += f"<tr><td>{metrica}</td>"
-            if pd.api.types.is_numeric_dtype(df_ajustado[metrica]):
-                max_valor = df_ajustado[metrica].max()  # Encuentra el valor máximo en esta métrica
-                for valor in df_ajustado[metrica]:
-                    if valor == max_valor:
-                        table_html += f"<td style='background-color: yellow;'>{valor}</td>"
-                    else:
+            if metrica in df_ajustado.columns:  # Verificar si la métrica está en el DataFrame ajustado
+                table_html += f"<tr><td>{metrica}</td>"
+                if pd.api.types.is_numeric_dtype(df_ajustado[metrica]):
+                    max_valor = df_ajustado[metrica].max()  # Encuentra el valor máximo en esta métrica
+                    for valor in df_ajustado[metrica]:
+                        if valor == max_valor:
+                            table_html += f"<td style='background-color: yellow;'>{valor}</td>"
+                        else:
+                            table_html += f"<td>{valor}</td>"
+                else:
+                    # No aplicar formato condicional si no es numérico
+                    for valor in df_ajustado[metrica]:
                         table_html += f"<td>{valor}</td>"
-            else:
-                # No aplicar formato condicional si no es numérico
-                for valor in df_ajustado[metrica]:
-                    table_html += f"<td>{valor}</td>"
-            table_html += "</tr>"
+                table_html += "</tr>"
         
         # Cerrar tabla
         table_html += "</tbody></table>"

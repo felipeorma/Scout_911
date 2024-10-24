@@ -43,7 +43,7 @@ metrics_by_position = {
         "Accurate passes, %": "avg"
     },
     'Defensa': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last", 
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "Accelerations per 90": "avg", 
@@ -67,7 +67,7 @@ metrics_by_position = {
         "Accurate passes, %": "avg"
     },
     'Lateral': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last", 
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "Successful attacking actions per 90": "avg", 
@@ -93,7 +93,7 @@ metrics_by_position = {
         "xA per 90": "avg"
     },
     'Mediocampista': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last", 
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "Assists per 90": "avg", 
@@ -112,7 +112,7 @@ metrics_by_position = {
         "Goals per 90": "avg"
     },
     'Extremos': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last", 
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "xG per 90": "avg", 
@@ -131,7 +131,7 @@ metrics_by_position = {
         "Successful dribbles, %": "avg"
     },
     'Delantero': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last", 
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "Goals per 90": "avg", 

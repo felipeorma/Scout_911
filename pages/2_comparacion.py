@@ -1,4 +1,4 @@
-        import streamlit as st
+import streamlit as st
 import pandas as pd
 
 # Diccionario ajustado con métricas por posición y su tipo (promedio o acumulativo)

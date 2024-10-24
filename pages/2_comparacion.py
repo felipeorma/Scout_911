@@ -32,6 +32,15 @@ metrics_by_position = {
                   "Shots per 90", "Shots on target, %", "Touches in box per 90"]
 }
 
+# Listas de métricas que deben ser promediadas o sumadas
+metrics_to_avg = ["Conceded goals per 90", "xG against per 90", "Prevented goals per 90", "Save rate, %", "Exits per 90",
+                  "Aerial duels per 90", "Accurate passes, %", "Accurate forward passes, %", "Accurate long passes, %",
+                  "Goals per 90", "Assists per 90", "xA per 90", "Key passes per 90", "Accurate crosses, %",
+                  "Accurate progressive passes, %", "Defensive duels won, %", "Offensive duels won, %"]
+
+metrics_to_sum = ["Matches played", "Minutes played", "Sliding tackles per 90", "Interceptions per 90", "Duels won, %",
+                  "Shots per 90", "Touches in box per 90", "Passes per 90"]
+
 # Función para obtener los datos cargados desde session_state
 def get_data():
     return st.session_state.data if 'data' in st.session_state else None
@@ -59,15 +68,15 @@ def comparacion():
         # Obtener métricas automáticas basadas en la posición seleccionada
         metricas_seleccionadas = metrics_by_position[posicion_seleccionada]
 
-        # Verificar si las columnas existen en los datos
-        columnas_existentes = ['Full name'] + [m for m in metricas_seleccionadas if m in df.columns]
-        
-        if len(columnas_existentes) <= 1:
-            st.warning("No se encontraron métricas disponibles para la posición seleccionada.")
-            return
-        
-        # Filtrar los jugadores seleccionados y las métricas seleccionadas
-        df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)][columnas_existentes]
+        # Filtrar los jugadores seleccionados
+        df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)]
+
+        # Agrupar por jugador y realizar las operaciones adecuadas
+        df_agrupado = df_comparacion.groupby('Full name').agg({
+            **{m: 'mean' for m in metrics_to_avg if m in df_comparacion.columns},
+            **{m: 'sum' for m in metrics_to_sum if m in df_comparacion.columns},
+            "Team within selected timeframe": 'last'  # Mostrar el último equipo
+        }).reset_index()
 
         # Crear tabla HTML para transponer
         table_html = """
@@ -91,25 +100,26 @@ def comparacion():
         """
 
         # Crear cabecera de jugadores
-        for jugador in df_comparacion['Full name']:
+        for jugador in df_agrupado['Full name']:
             table_html += f"<th>{jugador}</th>"
         table_html += "</tr></thead><tbody>"
         
         # Agregar las métricas como filas
         for metrica in metricas_seleccionadas:
-            table_html += f"<tr><td>{metrica}</td>"
-            if pd.api.types.is_numeric_dtype(df_comparacion[metrica]):
-                max_valor = df_comparacion[metrica].max()  # Encuentra el valor máximo en esta métrica
-                for valor in df_comparacion[metrica]:
-                    if valor == max_valor:
-                        table_html += f"<td style='background-color: yellow;'>{valor}</td>"
-                    else:
+            if metrica in df_agrupado.columns:
+                table_html += f"<tr><td>{metrica}</td>"
+                if pd.api.types.is_numeric_dtype(df_agrupado[metrica]):
+                    max_valor = df_agrupado[metrica].max()  # Encuentra el valor máximo en esta métrica
+                    for valor in df_agrupado[metrica]:
+                        if valor == max_valor:
+                            table_html += f"<td style='background-color: yellow;'>{valor}</td>"
+                        else:
+                            table_html += f"<td>{valor}</td>"
+                else:
+                    # No aplicar formato condicional si no es numérico
+                    for valor in df_agrupado[metrica]:
                         table_html += f"<td>{valor}</td>"
-            else:
-                # No aplicar formato condicional si no es numérico
-                for valor in df_comparacion[metrica]:
-                    table_html += f"<td>{valor}</td>"
-            table_html += "</tr>"
+                table_html += "</tr>"
         
         # Cerrar tabla
         table_html += "</tbody></table>"
@@ -119,3 +129,4 @@ def comparacion():
 
 if __name__ == "__main__":
     comparacion()
+

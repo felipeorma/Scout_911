@@ -1,40 +1,162 @@
-import streamlit as st
+        import streamlit as st
 import pandas as pd
 
-# Diccionario ajustado con métricas por posición
+# Diccionario ajustado con métricas por posición y su tipo (promedio o acumulativo)
 metrics_by_position = {
-    'Portero': ["Team within selected timeframe", "Matches played", "Minutes played", "Conceded goals per 90", "xG against per 90", 
-                "Prevented goals per 90", "Save rate, %", "Exits per 90", "Aerial duels per 90", "Back passes received as GK per 90", 
-                "Accurate passes, %", "Accurate forward passes, %", "Accurate long passes, %"],
-    'Defensa': ["Team within selected timeframe", "Matches played", "Minutes played", "Accelerations per 90", "Progressive runs per 90", 
-                "Aerial duels per 90", "Aerial duels won, %", "Defensive duels won, %", "Duels won, %", "Sliding tackles per 90", 
-                "Interceptions per 90", "Key passes per 90", "Short / medium passes per 90", "Forward passes per 90", "Long passes per 90", 
-                "Passes per 90", "PAdj Interceptions", "Accurate passes to final third, %", "Accurate forward passes, %", 
-                "Accurate back passes, %", "Accurate long passes, %", "Accurate passes, %"],
-    'Lateral': ["Team within selected timeframe", "Matches played", "Minutes played", "Successful attacking actions per 90", 
-                "Successful defensive actions per 90", "Accelerations per 90", "Progressive runs per 90", "Crosses to goalie box per 90", 
-                "Aerial duels won, %", "Offensive duels won, %", "Defensive duels won, %", "Defensive duels per 90", 
-                "Duels won, %", "Interceptions per 90", "Passes per 90", "Forward passes per 90", 
-                "Accurate passes to penalty area, %", "Received passes per 90", "Accurate passes to final third, %", 
-                "Accurate through passes, %", "Accurate forward passes, %", "Accurate progressive passes, %", "Third assists per 90", "xA per 90"],
-    'Mediocampista': ["Team within selected timeframe", "Matches played", "Minutes played", "Assists per 90", "xA per 90", "Offensive duels won, %", 
-                      "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", "Received passes per 90", 
-                      "Accurate short / medium passes, %", "Accurate passes to final third, %", 
-                      "Accurate long passes, %", "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
-    'Extremos': ["Team within selected timeframe", "Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
-                 "xA per 90", "Received passes per 90", "Accurate crosses, %", "Accurate through passes, %", 
-                 "Accurate progressive passes, %", "Crosses to goalie box per 90", "Accurate passes to penalty area, %", 
-                 "Offensive duels won, %", "Defensive duels won, %", "Interceptions per 90", "Successful dribbles, %"],
-    'Delantero': ["Team within selected timeframe", "Matches played", "Minutes played", "Goals per 90", "Head goals per 90", 
-                  "Non-penalty goals per 90", "Goal conversion, %", "xG per 90", "xA per 90", "Assists per 90", 
-                  "Key passes per 90", "Passes per 90", "Passes to penalty area per 90", "Passes to final third per 90", 
-                  "Accurate passes, %", "Accurate passes to final third, %", "Aerial duels won, %", "Duels won, %", 
-                  "Shots per 90", "Shots on target, %", "Touches in box per 90"]
+    'Portero': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Conceded goals per 90": "avg", 
+        "xG against per 90": "avg", 
+        "Prevented goals per 90": "avg", 
+        "Save rate, %": "avg", 
+        "Exits per 90": "avg", 
+        "Aerial duels per 90": "avg", 
+        "Back passes received as GK per 90": "avg", 
+        "Accurate passes, %": "avg", 
+        "Accurate forward passes, %": "avg", 
+        "Accurate long passes, %": "avg"
+    },
+    'Defensa': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Accelerations per 90": "avg", 
+        "Progressive runs per 90": "avg", 
+        "Aerial duels per 90": "avg", 
+        "Aerial duels won, %": "avg", 
+        "Defensive duels won, %": "avg", 
+        "Duels won, %": "avg", 
+        "Sliding tackles per 90": "avg", 
+        "Interceptions per 90": "avg", 
+        "Key passes per 90": "avg", 
+        "Short / medium passes per 90": "avg", 
+        "Forward passes per 90": "avg", 
+        "Long passes per 90": "avg", 
+        "Passes per 90": "avg", 
+        "PAdj Interceptions": "avg", 
+        "Accurate passes to final third, %": "avg", 
+        "Accurate forward passes, %": "avg", 
+        "Accurate back passes, %": "avg", 
+        "Accurate long passes, %": "avg", 
+        "Accurate passes, %": "avg"
+    },
+    'Lateral': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Successful attacking actions per 90": "avg", 
+        "Successful defensive actions per 90": "avg", 
+        "Accelerations per 90": "avg", 
+        "Progressive runs per 90": "avg", 
+        "Crosses to goalie box per 90": "avg", 
+        "Aerial duels won, %": "avg", 
+        "Offensive duels won, %": "avg", 
+        "Defensive duels won, %": "avg", 
+        "Defensive duels per 90": "avg", 
+        "Duels won, %": "avg", 
+        "Interceptions per 90": "avg", 
+        "Passes per 90": "avg", 
+        "Forward passes per 90": "avg", 
+        "Accurate passes to penalty area, %": "avg", 
+        "Received passes per 90": "avg", 
+        "Accurate passes to final third, %": "avg", 
+        "Accurate through passes, %": "avg", 
+        "Accurate forward passes, %": "avg", 
+        "Accurate progressive passes, %": "avg", 
+        "Third assists per 90": "avg", 
+        "xA per 90": "avg"
+    },
+    'Mediocampista': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Assists per 90": "avg", 
+        "xA per 90": "avg", 
+        "Offensive duels won, %": "avg", 
+        "Aerial duels won, %": "avg", 
+        "Defensive duels won, %": "avg", 
+        "Interceptions per 90": "avg", 
+        "Received passes per 90": "avg", 
+        "Accurate short / medium passes, %": "avg", 
+        "Accurate passes to final third, %": "avg", 
+        "Accurate long passes, %": "avg", 
+        "Accurate progressive passes, %": "avg", 
+        "Successful dribbles, %": "avg", 
+        "xG per 90": "avg", 
+        "Goals per 90": "avg"
+    },
+    'Extremos': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "xG per 90": "avg", 
+        "Goals per 90": "avg", 
+        "Assists per 90": "avg", 
+        "xA per 90": "avg", 
+        "Received passes per 90": "avg", 
+        "Accurate crosses, %": "avg", 
+        "Accurate through passes, %": "avg", 
+        "Accurate progressive passes, %": "avg", 
+        "Crosses to goalie box per 90": "avg", 
+        "Accurate passes to penalty area, %": "avg", 
+        "Offensive duels won, %": "avg", 
+        "Defensive duels won, %": "avg", 
+        "Interceptions per 90": "avg", 
+        "Successful dribbles, %": "avg"
+    },
+    'Delantero': {
+        "Team within selected timeframe": "ignore", 
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Goals per 90": "avg", 
+        "Head goals per 90": "avg", 
+        "Non-penalty goals per 90": "avg", 
+        "Goal conversion, %": "avg", 
+        "xG per 90": "avg", 
+        "xA per 90": "avg", 
+        "Assists per 90": "avg", 
+        "Key passes per 90": "avg", 
+        "Passes per 90": "avg", 
+        "Passes to penalty area per 90": "avg", 
+        "Passes to final third per 90": "avg", 
+        "Accurate passes, %": "avg", 
+        "Accurate passes to final third, %": "avg", 
+        "Aerial duels won, %": "avg", 
+        "Duels won, %": "avg", 
+        "Shots per 90": "avg", 
+        "Shots on target, %": "avg", 
+        "Touches in box per 90": "avg"
+    }
 }
 
 # Función para obtener los datos cargados desde session_state
 def get_data():
     return st.session_state.data if 'data' in st.session_state else None
+
+# Función para promediar y sumar métricas
+def calcular_metricas_ajustadas(df, metricas):
+    # Agrupar por jugador
+    jugadores = df['Full name'].unique()
+    datos_ajustados = []
+
+    for jugador in jugadores:
+        jugador_df = df[df['Full name'] == jugador]
+        resultado_jugador = {'Full name': jugador}
+        
+        # Para cada métrica, aplicar la operación correspondiente (suma o promedio)
+        for metrica, operacion in metricas.items():
+            if operacion == 'avg':
+                resultado_jugador[metrica] = jugador_df[metrica].mean()
+            elif operacion == 'sum':
+                resultado_jugador[metrica] = jugador_df[metrica].sum()
+            elif operacion == 'ignore':
+                continue
+        
+        datos_ajustados.append(resultado_jugador)
+
+    return pd.DataFrame(datos_ajustados)
 
 # Función principal de comparación
 def comparacion():
@@ -66,8 +188,11 @@ def comparacion():
             st.warning("No se encontraron métricas disponibles para la posición seleccionada.")
             return
         
-        # Filtrar los jugadores seleccionados y las métricas seleccionadas
+# Filtrar los jugadores seleccionados y las métricas seleccionadas
         df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)][columnas_existentes]
+
+        # Aplicar promedios o sumas según corresponda
+        df_ajustado = calcular_metricas_ajustadas(df_comparacion, metricas_seleccionadas)
 
         # Crear tabla HTML para transponer
         table_html = """
@@ -91,23 +216,23 @@ def comparacion():
         """
 
         # Crear cabecera de jugadores
-        for jugador in df_comparacion['Full name']:
+        for jugador in df_ajustado['Full name']:
             table_html += f"<th>{jugador}</th>"
         table_html += "</tr></thead><tbody>"
         
         # Agregar las métricas como filas
         for metrica in metricas_seleccionadas:
             table_html += f"<tr><td>{metrica}</td>"
-            if pd.api.types.is_numeric_dtype(df_comparacion[metrica]):
-                max_valor = df_comparacion[metrica].max()  # Encuentra el valor máximo en esta métrica
-                for valor in df_comparacion[metrica]:
+            if pd.api.types.is_numeric_dtype(df_ajustado[metrica]):
+                max_valor = df_ajustado[metrica].max()  # Encuentra el valor máximo en esta métrica
+                for valor in df_ajustado[metrica]:
                     if valor == max_valor:
                         table_html += f"<td style='background-color: yellow;'>{valor}</td>"
                     else:
                         table_html += f"<td>{valor}</td>"
             else:
                 # No aplicar formato condicional si no es numérico
-                for valor in df_comparacion[metrica]:
+                for valor in df_ajustado[metrica]:
                     table_html += f"<td>{valor}</td>"
             table_html += "</tr>"
         

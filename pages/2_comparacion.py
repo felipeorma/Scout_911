@@ -4,7 +4,7 @@ import pandas as pd
 # Diccionario ajustado con métricas por posición y su tipo (promedio o acumulativo)
 metrics_by_position = {
     'Portero': {
-        "Team within selected timeframe": "ignore", 
+        "Team within selected timeframe": "last",  # Mostrar el último equipo
         "Matches played": "sum", 
         "Minutes played": "sum", 
         "Conceded goals per 90": "avg", 
@@ -17,6 +17,30 @@ metrics_by_position = {
         "Accurate passes, %": "avg", 
         "Accurate forward passes, %": "avg", 
         "Accurate long passes, %": "avg"
+    },
+    'Defensa': {
+        "Team within selected timeframe": "last",  # Mostrar el último equipo
+        "Matches played": "sum", 
+        "Minutes played": "sum", 
+        "Accelerations per 90": "avg", 
+        "Progressive runs per 90": "avg", 
+        "Aerial duels per 90": "avg", 
+        "Aerial duels won, %": "avg", 
+        "Defensive duels won, %": "avg", 
+        "Duels won, %": "avg", 
+        "Sliding tackles per 90": "avg", 
+        "Interceptions per 90": "avg", 
+        "Key passes per 90": "avg", 
+        "Short / medium passes per 90": "avg", 
+        "Forward passes per 90": "avg", 
+        "Long passes per 90": "avg", 
+        "Passes per 90": "avg", 
+        "PAdj Interceptions": "avg", 
+        "Accurate passes to final third, %": "avg", 
+        "Accurate forward passes, %": "avg", 
+        "Accurate back passes, %": "avg", 
+        "Accurate long passes, %": "avg", 
+        "Accurate passes, %": "avg"
     },
     'Defensa': {
         "Team within selected timeframe": "ignore", 
@@ -131,13 +155,11 @@ metrics_by_position = {
     }
 }
 
-
-
 # Función para obtener los datos cargados desde session_state
 def get_data():
     return st.session_state.data if 'data' in st.session_state else None
 
-# Función para promediar y sumar métricas
+# Función para promediar, sumar métricas o mostrar el último equipo
 def calcular_metricas_ajustadas(df, metricas):
     # Agrupar por jugador
     jugadores = df['Full name'].unique()
@@ -147,13 +169,15 @@ def calcular_metricas_ajustadas(df, metricas):
         jugador_df = df[df['Full name'] == jugador]
         resultado_jugador = {'Full name': jugador}
         
-        # Para cada métrica, aplicar la operación correspondiente (suma o promedio)
+        # Para cada métrica, aplicar la operación correspondiente (suma, promedio o último equipo)
         for metrica, operacion in metricas.items():
             if metrica in jugador_df.columns:
                 if operacion == 'avg':
                     resultado_jugador[metrica] = jugador_df[metrica].mean()
                 elif operacion == 'sum':
                     resultado_jugador[metrica] = jugador_df[metrica].sum()
+                elif operacion == 'last':
+                    resultado_jugador[metrica] = jugador_df[metrica].iloc[-1]  # Obtener el último valor registrado
             else:
                 st.warning(f"Métrica {metrica} no encontrada en los datos para {jugador}. Omitiendo...")
         
@@ -194,7 +218,7 @@ def comparacion():
         # Filtrar los jugadores seleccionados y las métricas seleccionadas
         df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)][columnas_existentes]
 
-        # Aplicar promedios o sumas según corresponda
+        # Aplicar promedios, sumas o mostrar el último equipo según corresponda
         df_ajustado = calcular_metricas_ajustadas(df_comparacion, metricas_seleccionadas)
 
         # Crear tabla HTML para transponer

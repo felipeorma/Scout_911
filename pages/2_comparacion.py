@@ -21,7 +21,7 @@ metrics_by_position = {
                       "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", "Received passes per 90", 
                       "Accurate short / medium passes, %", "Accurate passes to final third, %", 
                       "Accurate long passes, %", "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
-    'Extremos': ["Team", "Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
+    'Extremos': ["Team within selected timeframe", "Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
                  "xA per 90", "Received passes per 90", "Accurate crosses, %", "Accurate through passes, %", 
                  "Accurate progressive passes, %", "Crosses to goalie box per 90", "Accurate passes to penalty area, %", 
                  "Offensive duels won, %", "Defensive duels won, %", "Interceptions per 90", "Successful dribbles, %"],
@@ -32,14 +32,9 @@ metrics_by_position = {
                   "Shots per 90", "Shots on target, %", "Touches in box per 90"]
 }
 
-# Listas de métricas que deben ser promediadas o sumadas
-metrics_to_avg = ["Conceded goals per 90", "xG against per 90", "Prevented goals per 90", "Save rate, %", "Exits per 90",
-                  "Aerial duels per 90", "Accurate passes, %", "Accurate forward passes, %", "Accurate long passes, %",
-                  "Goals per 90", "Assists per 90", "xA per 90", "Key passes per 90", "Accurate crosses, %",
-                  "Accurate progressive passes, %", "Defensive duels won, %", "Offensive duels won, %"]
-
-metrics_to_sum = ["Matches played", "Minutes played", "Sliding tackles per 90", "Interceptions per 90", "Duels won, %",
-                  "Shots per 90", "Touches in box per 90", "Passes per 90"]
+# Filtrar las métricas "per 90" para ser promediadas automáticamente
+def get_metrics_to_avg(metricas):
+    return [m for m in metricas if "per 90" in m]
 
 # Función para obtener los datos cargados desde session_state
 def get_data():
@@ -69,12 +64,16 @@ def comparacion():
         metricas_seleccionadas = metrics_by_position[posicion_seleccionada]
 
         # Filtrar los jugadores seleccionados
-        df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)]
+        df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)].fillna(0)
+
+        # Definir las métricas a promediar y a sumar
+        metrics_to_avg = get_metrics_to_avg(metricas_seleccionadas)
+        metrics_to_sum = [m for m in metricas_seleccionadas if m not in metrics_to_avg]
 
         # Agrupar por jugador y realizar las operaciones adecuadas
         df_agrupado = df_comparacion.groupby('Full name').agg({
-            **{m: 'mean' for m in metrics_to_avg if m in df_comparacion.columns},
-            **{m: 'sum' for m in metrics_to_sum if m in df_comparacion.columns},
+            **{m: 'mean' for m in metrics_to_avg if m in df_comparacion.columns},  # Promediar las métricas "per 90"
+            **{m: 'sum' for m in metrics_to_sum if m in df_comparacion.columns},   # Sumar las métricas acumulativas
             "Team within selected timeframe": 'last'  # Mostrar el último equipo
         }).reset_index()
 
@@ -129,4 +128,3 @@ def comparacion():
 
 if __name__ == "__main__":
     comparacion()
-

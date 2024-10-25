@@ -36,14 +36,6 @@ metrics_by_position = {
 def get_metrics_to_avg(metricas):
     return [m for m in metricas if "per 90" in m]
 
-# Función para obtener los datos cargados desde session_state
-def get_data():
-    return st.session_state.data if 'data' in st.session_state else None
-
-# Función para limitar los porcentajes a 100%
-def limit_percentage(value):
-    return min(value, 100)
-
 # Función principal de comparación
 def comparacion():
     st.title("Comparación de Jugadores")
@@ -77,14 +69,10 @@ def comparacion():
         # Agrupar por jugador y realizar las operaciones adecuadas
         df_agrupado = df_comparacion.groupby('Full name').agg({
             **{m: 'mean' for m in metrics_to_avg if m in df_comparacion.columns},  # Promediar las métricas "per 90"
+            **{m: 'mean' for m in df_comparacion.columns if "%" in m},             # Promediar los porcentajes
             **{m: 'sum' for m in metrics_to_sum if m in df_comparacion.columns},   # Sumar las métricas acumulativas
             "Team within selected timeframe": 'last'  # Mostrar el último equipo
         }).reset_index()
-
-        # Limitar los porcentajes a un máximo de 100
-        for col in df_agrupado.columns:
-            if "%" in col:
-                df_agrupado[col] = df_agrupado[col].apply(limit_percentage)
 
         # Crear tabla HTML para transponer
         table_html = """

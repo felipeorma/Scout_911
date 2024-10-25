@@ -40,6 +40,10 @@ def get_metrics_to_avg(metricas):
 def get_data():
     return st.session_state.data if 'data' in st.session_state else None
 
+# Función para limitar los porcentajes a 100%
+def limit_percentage(value):
+    return min(value, 100)
+
 # Función principal de comparación
 def comparacion():
     st.title("Comparación de Jugadores")
@@ -76,6 +80,11 @@ def comparacion():
             **{m: 'sum' for m in metrics_to_sum if m in df_comparacion.columns},   # Sumar las métricas acumulativas
             "Team within selected timeframe": 'last'  # Mostrar el último equipo
         }).reset_index()
+
+        # Limitar los porcentajes a un máximo de 100
+        for col in df_agrupado.columns:
+            if "%" in col:
+                df_agrupado[col] = df_agrupado[col].apply(limit_percentage)
 
         # Crear tabla HTML para transponer
         table_html = """

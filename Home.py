@@ -17,11 +17,11 @@ league_files = [
     "Argentina Copa de la Liga 2024.parquet",
     "Argentina Primera Nacional 2024.parquet",
     "Bolivian LFPB 2024.parquet",
-    "Brasileirão 2024.parquet",
+    "Brasileirão 2024.parquet",
     "Brazil Serie B 2024.parquet",
     "Brazil Serie C 2024.parquet",
     "Chilean Primera B 2024.parquet",
-    "Chilean Primera Division 2024.parquet",
+    "Chilean Primera División 2024.parquet",
     "Colombian Primera A 2024.parquet",
     "Colombian Torneo BetPlay 2024.parquet",
     "Ecuador Liga Pro 2024.parquet",
@@ -29,7 +29,7 @@ league_files = [
     "Panama LPF 2024.parquet",
     "Paraguay Division Profesional 2024.parquet",
     "Peruvian Liga 1 2024.parquet",
-    "Uruguay Primera División 2024.parquet"
+    "Uruguay Primera División 2024.parquet"
 ]
 
 # Cargar los datos automáticamente

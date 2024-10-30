@@ -32,7 +32,7 @@ league_files = [
     "Uruguay Primera División 2024.parquet"
 ]
 
-# Cargar los datos automáticamente
+# Función para cargar los datos desde GitHub
 @st.cache_data
 def load_data():
     combined_df = pd.DataFrame()
@@ -47,21 +47,18 @@ def load_data():
         except Exception as e:
             st.error(f"Error al leer el archivo {file_name}: {str(e)}")
     
-    if not combined_df.empty:
-        st.session_state['data'] = combined_df
+    return combined_df
+
+# Botón para cargar datos manualmente
+if st.button("Cargar Datos") or 'data' in st.session_state:
+    if 'data' not in st.session_state:
+        st.session_state['data'] = load_data()
         st.success("Archivos cargados correctamente.")
-    else:
-        st.warning("No se cargaron datos.")
 
-# Llamar a la función para cargar datos
-if 'data' not in st.session_state:
-    load_data()
-
-# Mostrar el contenido de la data si existe
-if 'data' in st.session_state and not st.session_state['data'].empty:
+    # Mostrar el contenido de la data si existe
     st.write("Archivos cargados:")
     # Seleccionar solo las columnas que quieres mostrar
-    columnas_a_mostrar = ['Full name', 'Team within selected timeframe', 'Age', 'Position']
+    columnas_a_mostrar = ['Full name', 'Team within selected timeframe', 'Age', 'Position', 'Passport country']
     
     # Verificar que las columnas existan en el DataFrame
     if all(col in st.session_state['data'].columns for col in columnas_a_mostrar):
@@ -69,4 +66,5 @@ if 'data' in st.session_state and not st.session_state['data'].empty:
     else:
         st.warning("No se encontraron todas las columnas necesarias en los datos.")
 else:
-    st.info("No se han cargado datos aún.")
+    st.info("Haz clic en el botón 'Cargar Datos' para cargar los archivos.")
+

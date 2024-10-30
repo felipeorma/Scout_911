@@ -4,6 +4,8 @@ import pandas as pd
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout/Busqueda", page_icon="🔎", layout="wide")
 
+st.subheader("By: CECO")
+
 # Función para traducir la posición a términos más comunes
 def traducir_posicion(posicion):
     posiciones = {
@@ -21,7 +23,7 @@ def traducir_posicion(posicion):
     for abreviatura, nombre in posiciones.items():
         if abreviatura in posicion:
             return nombre
-    return posicion  # Si no se encuentra una traducción, retorna la posición original
+    return posicion
 
 # Función principal para la búsqueda
 def busqueda():
@@ -36,6 +38,11 @@ def busqueda():
 
     # Mostrar el número total de registros
     st.write(f"Total de registros: {len(df)}")
+
+    # Completar valores nulos en 'Age' y 'Height' con un valor alto para no afectar los rangos
+    df['Age'].fillna(df['Age'].mean(), inplace=True)
+    df['Height'].fillna(df['Height'].mean(), inplace=True)
+    df['Foot'].fillna('unknown', inplace=True)
 
     # Filtro de posición principal
     posiciones_disponibles = ['Arquero', 'Defensa', 'Lateral Izquierdo', 'Lateral Derecho',
@@ -62,6 +69,18 @@ def busqueda():
         df = df[df['Position'].str.contains('RW|LW|LWF|RWF', na=False)]
     elif selected_position == 'Delantero':
         df = df[df['Position'].str.contains('CF', na=False)]
+
+    # Filtro de pie dominante
+    if 'Foot' in df.columns:
+        selected_foot = st.selectbox("Selecciona el pie dominante", ["Ambos", "Derecho", "Izquierdo", "Unknown"])
+        if selected_foot == "Derecho":
+            df = df[df['Foot'] == 'right']
+        elif selected_foot == "Izquierdo":
+            df = df[df['Foot'] == 'left']
+        elif selected_foot == "Unknown":
+            df = df[df['Foot'] == 'unknown']
+    else:
+        st.warning("No se encontraron datos de pie dominante en los archivos.")
 
     # Filtro de rango de edad y altura en la misma fila
     if 'Age' in df.columns and 'Height' in df.columns:

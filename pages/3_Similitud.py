@@ -3,6 +3,9 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
+# Configurar la página en formato "wide"
+st.set_page_config(page_title="911_Scout/Similitud", page_icon="👀", layout="wide")
+
 # Función para cargar los datos desde el session_state
 def get_data():
     if 'data' in st.session_state:

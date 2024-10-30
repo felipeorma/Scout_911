@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# Configurar la página en formato "wide"
+st.set_page_config(page_title="911_Scout/Comparación", page_icon="⚖️", layout="wide")
+
 # Diccionario ajustado con métricas por posición
 metrics_by_position = {
     'Portero': ["Matches played", "Minutes played", "Conceded goals per 90", "xG against per 90", 

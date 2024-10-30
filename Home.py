@@ -6,8 +6,9 @@ from io import BytesIO
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout", page_icon="⚽", layout="wide")
 
-# Título principal
+# Título principal y subtítulo
 st.header("Carga de datos")
+st.subheader("Desarrollado por: Carlos Eduardo Canal Ortiz")
 
 # URL base de los archivos en GitHub
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/CarlosCO94/Scout_911/main/data/"

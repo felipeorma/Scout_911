@@ -4,7 +4,7 @@ import requests
 from io import BytesIO
 
 # Configurar la página en formato "wide"
-st.set_page_config(page_title="911_Scout - Scoring", page_icon="⚽", layout="wide")
+st.set_page_config(page_title="911_Scout/Puntaje", page_icon="🥇🥈🥉", layout="wide")
 
 # Título principal
 st.header("Scoring de Jugadores")

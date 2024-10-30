@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# Configurar la página en formato "wide"
+st.set_page_config(page_title="911_Scout/Busqueda", page_icon="🔎", layout="wide")
+
 # Función para traducir la posición a términos más comunes
 def traducir_posicion(posicion):
     posiciones = {

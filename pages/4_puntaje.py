@@ -17,20 +17,23 @@ league_files = {
     "Argentina Copa de la Liga 2024": "Argentina Copa de la Liga 2024.parquet",
     "Argentina Primera Nacional 2024": "Argentina Primera Nacional 2024.parquet",
     "Bolivian LFPB 2024": "Bolivian LFPB 2024.parquet",
-    "Brasileirão 2024": "Brasileirão 2024.parquet",
+    "Brasileirão 2024": "Brasileirao 2024.parquet",
     "Brazil Serie B 2024": "Brazil Serie B 2024.parquet",
     "Brazil Serie C 2024": "Brazil Serie C 2024.parquet",
+    "Canadian Premier League 2024": "Canadian Premier League 2024.parquet",
     "Chilean Primera B 2024": "Chilean Primera B 2024.parquet",
+    "Chilean Primera Division 2023": "Chilean Primera Division 2023.parquet",
     "Chilean Primera Division 2024": "Chilean Primera Division 2024.parquet",
     "Colombian Primera A 2024": "Colombian Primera A 2024.parquet",
     "Colombian Torneo BetPlay 2024": "Colombian Torneo BetPlay 2024.parquet",
     "Ecuador Liga Pro 2024": "Ecuador Liga Pro 2024.parquet",
     "MLS 2024": "MLS 2024.parquet",
+    "MLS Next Pro 2024": "MLS Next Pro 2024.parquet",
     "Panama LPF 2024": "Panama LPF 2024.parquet",
     "Paraguay Division Profesional 2024": "Paraguay Division Profesional 2024.parquet",
     "Peruvian Liga 1 2024": "Peruvian Liga 1 2024.parquet",
-    "Uruguay Primera División 2024": "Uruguay Primera División 2024.parquet",
-    # Agrega el resto de archivos aquí
+    "USL Championship 2024": "USL Championship 2024.parquet",
+    "Uruguay Primera Division 2024": "Uruguay Primera Division 2024.parquet"
 }
 
 # Función para cargar datos de una liga específica desde GitHub

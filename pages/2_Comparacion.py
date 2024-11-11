@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# Configurar la página en formato "wide"
-st.set_page_config(page_title="911_Scout/Comparación", page_icon="⚖️", layout="wide")
-
 # Diccionario ajustado con métricas por posición
 metrics_by_position = {
     'Portero': ["Matches played", "Minutes played", "Conceded goals per 90", "xG against per 90", 
@@ -53,9 +50,12 @@ def comparacion():
     if df is None or df.empty:
         st.warning("No hay datos cargados. Por favor, carga los datos en la página principal.")
         return
+
+    # Crear un identificador único combinando "Full name" y "Team" y asignarlo a la nueva columna "Player_ID"
+    df['Player_ID'] = df['Full name'] + " (" + df['Team'] + ")"
     
-    # Seleccionar los jugadores para la comparación
-    jugadores_disponibles = df['Full name'].unique()
+    # Seleccionar los jugadores para la comparación usando el ID único
+    jugadores_disponibles = df['Player_ID'].unique()
     jugadores_seleccionados = st.multiselect("Selecciona los jugadores para comparar", jugadores_disponibles)
 
     # Selección de posición para mostrar métricas específicas
@@ -67,10 +67,7 @@ def comparacion():
         metricas_seleccionadas = metrics_by_position[posicion_seleccionada]
 
         # Filtrar los jugadores seleccionados
-        df_comparacion = df[df['Full name'].isin(jugadores_seleccionados)].fillna(0)
-
-        # Crear una nueva columna que combine Full name y Team
-        df_comparacion['Player_Team'] = df_comparacion['Full name'] + " (" + df_comparacion['Team within selected timeframe'] + ")"
+        df_comparacion = df[df['Player_ID'].isin(jugadores_seleccionados)].fillna(0)
 
         # Crear tabla HTML para mostrar métricas
         table_html = """
@@ -96,8 +93,8 @@ def comparacion():
         <tr><th>Métrica</th>
         """
 
-        # Crear cabecera de jugadores (usando la nueva columna)
-        for jugador in df_comparacion['Player_Team'].unique():
+        # Crear cabecera de jugadores (usando "Player_ID")
+        for jugador in df_comparacion['Player_ID'].unique():
             table_html += f"<th>{jugador}</th>"
         table_html += "</tr></thead><tbody>"
         
@@ -107,19 +104,19 @@ def comparacion():
             table_html += f"<tr><td>{metrica}</td>"
             max_valores = {}
             
-            # Primero, obtenemos los valores para cada jugador
-            for jugador in df_comparacion['Player_Team'].unique():
+            # Obtener los valores de cada jugador
+            for jugador in df_comparacion['Player_ID'].unique():
                 valor = ""
-                df_jugador = df_comparacion[df_comparacion['Player_Team'] == jugador]
+                df_jugador = df_comparacion[df_comparacion['Player_ID'] == jugador]
                 
                 for index, row in df_jugador.iterrows():
                     valor += f"{row[metrica]}<br>"
                 
-                # Si no hay valor, mostrar un mensaje
+                # Si no hay valor, mostrar "No data"
                 if not valor:
                     valor = "No data"
                 
-                # Guardamos el valor en un diccionario para encontrar el máximo
+                # Guardamos el valor para encontrar el máximo
                 try:
                     max_valores[jugador] = float(valor.split("<br>")[0])  # Tomar el primer valor como numérico
                 except ValueError:
@@ -132,8 +129,8 @@ def comparacion():
             max_valor = max(max_valores.values())
             for jugador in max_valores.keys():
                 if max_valores[jugador] == max_valor and max_valor >= 0:
-                    table_html = table_html.replace(f"<td>{df_comparacion[df_comparacion['Player_Team'] == jugador][metrica].iloc[0]}<br></td>", 
-                                                      f"<td class='highlight'>{df_comparacion[df_comparacion['Player_Team'] == jugador][metrica].iloc[0]}<br></td>")
+                    table_html = table_html.replace(f"<td>{df_comparacion[df_comparacion['Player_ID'] == jugador][metrica].iloc[0]}<br></td>", 
+                                                      f"<td class='highlight'>{df_comparacion[df_comparacion['Player_ID'] == jugador][metrica].iloc[0]}<br></td>")
         
             table_html += "</tr>"
         

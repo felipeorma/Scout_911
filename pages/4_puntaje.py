@@ -5,7 +5,6 @@ from io import BytesIO
 
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout - Scoring", page_icon="⚽", layout="wide")
-st.subheader("By: CECO")
 
 # Título principal
 st.header("Scoring de Jugadores")

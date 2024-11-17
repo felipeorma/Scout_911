@@ -6,9 +6,9 @@ from io import BytesIO
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout", page_icon="⚽", layout="wide")
 
-# Título principal y subtítulo
-st.header("Carga de datos")
-st.subheader("By: CECO")
+# Agregar el logo en la parte superior de la barra lateral
+st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0NVTRcTGt9QcKvw2jdga0vvJjlW_RoLUUdw&s", use_column_width=True)
+st.sidebar.markdown("### DEPARTAMENTO DE SCOUTING")
 
 # URL base de los archivos en GitHub
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/CarlosCO94/Scout_911/main/data/"
@@ -74,16 +74,26 @@ if st.button("Cargar Datos") or 'data' in st.session_state:
 
     # Mostrar el contenido de la data si existe
     st.write("Archivos cargados:")
-    columnas_a_mostrar = ['Full name', 'Team within selected timeframe', 'Age', 'Position', 'Passport country']
+    columnas_a_mostrar = ['Team logo', 'Full name', 'Team within selected timeframe', 'Age', 'Position', 'Passport country']
     
     # Verificar que las columnas existan en el DataFrame
     if all(col in st.session_state['data'].columns for col in columnas_a_mostrar):
+        # Filtrar datos para las columnas relevantes
         df_filtered = st.session_state['data'][columnas_a_mostrar].head(10)  # Muestra solo los primeros 10 registros
         
-        # Mostrar la tabla sin formato condicional
+        # Configurar column_config para mostrar imágenes en Team Logo
         st.write("Vista previa de los datos:")
-        st.dataframe(df_filtered)
+        st.data_editor(
+            df_filtered,
+            column_config={
+                "Team logo": st.column_config.ImageColumn(
+                    "Team logo", help="Logos of the teams", width="100px"
+                ),
+            },
+            hide_index=True,
+        )
     else:
         st.warning("No se encontraron todas las columnas necesarias en los datos.")
 else:
     st.info("Haz clic en el botón 'Cargar Datos' para cargar los archivos.")
+

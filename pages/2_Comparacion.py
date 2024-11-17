@@ -52,7 +52,7 @@ def comparacion():
         return
 
     # Crear un identificador único combinando "Full name" y "Team" y asignarlo a la nueva columna "Player_ID"
-    df['Player_ID'] = df['Full name'] + " (" + df['Team'] + ")"
+    df['Player_ID'] = df['Full name'] + " (" + df['Team within selected timeframe'] + ")"
     
     # Seleccionar los jugadores para la comparación usando el ID único
     jugadores_disponibles = df['Player_ID'].unique()
@@ -93,44 +93,46 @@ def comparacion():
         <tr><th>Métrica</th>
         """
 
-        # Crear cabecera de jugadores (usando "Player_ID")
+        # Crear cabecera de jugadores con sus escudos
         for jugador in df_comparacion['Player_ID'].unique():
-            table_html += f"<th>{jugador}</th>"
+            # Obtener URL del logotipo
+            team_logo = df_comparacion[df_comparacion['Player_ID'] == jugador]['Team logo'].iloc[0]
+            # Crear celda con el nombre del jugador y el logo
+            table_html += f"<th><img src='{team_logo}' width='50'><br>{jugador}</th>"
         table_html += "</tr></thead><tbody>"
         
         # Agregar las métricas como filas
         for metrica in metricas_seleccionadas:
             # Crear una fila para cada métrica
             table_html += f"<tr><td>{metrica}</td>"
-            max_valores = {}
-            
-            # Obtener los valores de cada jugador
-            for jugador in df_comparacion['Player_ID'].unique():
-                valor = ""
-                df_jugador = df_comparacion[df_comparacion['Player_ID'] == jugador]
-                
-                for index, row in df_jugador.iterrows():
-                    valor += f"{row[metrica]}<br>"
-                
-                # Si no hay valor, mostrar "No data"
-                if not valor:
-                    valor = "No data"
-                
-                # Guardamos el valor para encontrar el máximo
-                try:
-                    max_valores[jugador] = float(valor.split("<br>")[0])  # Tomar el primer valor como numérico
-                except ValueError:
-                    max_valores[jugador] = -1  # Si no es un número, usar un valor bajo para no destacar
 
-                # Agregar la celda correspondiente
+            # Obtener los valores de cada jugador
+            valores_jugadores = {}
+            for jugador in df_comparacion['Player_ID'].unique():
+                df_jugador = df_comparacion[df_comparacion['Player_ID'] == jugador]
+                try:
+                    # Convertir el valor a float si es posible
+                    valor = float(df_jugador[metrica].iloc[0]) if metrica in df_jugador.columns else 0
+                except ValueError:
+                    # Si no es convertible, usar el valor original
+                    valor = df_jugador[metrica].iloc[0] if metrica in df_jugador.columns else "No data"
+                valores_jugadores[jugador] = valor
+
+                # Mostrar el valor en la celda
                 table_html += f"<td>{valor}</td>"
-            
-            # Determinar el máximo y resaltar la celda correspondiente
-            max_valor = max(max_valores.values())
-            for jugador in max_valores.keys():
-                if max_valores[jugador] == max_valor and max_valor >= 0:
-                    table_html = table_html.replace(f"<td>{df_comparacion[df_comparacion['Player_ID'] == jugador][metrica].iloc[0]}<br></td>", 
-                                                      f"<td class='highlight'>{df_comparacion[df_comparacion['Player_ID'] == jugador][metrica].iloc[0]}<br></td>")
+
+            # Determinar el valor máximo para resaltar
+            max_valor = max(
+                [v for v in valores_jugadores.values() if isinstance(v, (int, float))],
+                default=-float('inf')
+            )
+            for jugador, valor in valores_jugadores.items():
+                if isinstance(valor, (int, float)) and valor == max_valor:
+                    # Resaltar la celda del jugador con el valor máximo
+                    table_html = table_html.replace(
+                        f"<td>{valor}</td>",
+                        f"<td class='highlight'>{valor}</td>"
+                    )
         
             table_html += "</tr>"
         

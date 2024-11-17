@@ -1,7 +1,61 @@
+# Importar las librerías necesarias
 import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+
+# Diccionario de métricas por posición
+metrics_by_position = {
+    'Portero': ["Matches played", "Minutes played", "Conceded goals per 90", "xG against per 90", 
+                "Prevented goals per 90", "Save rate, %", "Exits per 90", "Aerial duels per 90", 
+                "Back passes received as GK per 90", "Accurate passes, %", "Accurate forward passes, %", 
+                "Accurate long passes, %"],
+    'Defensa': ["Matches played", "Minutes played", "Accelerations per 90", "Progressive runs per 90", 
+                "Aerial duels per 90", "Aerial duels won, %", "Defensive duels won, %", "Duels won, %", 
+                "Sliding tackles per 90", "Interceptions per 90", "Key passes per 90", "Short / medium passes per 90", 
+                "Forward passes per 90", "Long passes per 90", "Passes per 90", "Accurate passes to final third, %", 
+                "Accurate forward passes, %", "Accurate back passes, %", "Accurate long passes, %", "Accurate passes, %"],
+    'Lateral Izquierdo': ["Matches played", "Minutes played", "Successful attacking actions per 90", 
+                          "Successful defensive actions per 90", "Accelerations per 90", "Progressive runs per 90", 
+                          "Crosses to goalie box per 90", "Aerial duels won, %", "Offensive duels won, %", 
+                          "Defensive duels won, %", "Defensive duels per 90", "Duels won, %", 
+                          "Interceptions per 90", "Passes per 90", "Forward passes per 90", 
+                          "Accurate passes to penalty area, %", "Received passes per 90", 
+                          "Accurate passes to final third, %", "Accurate through passes, %", 
+                          "Accurate forward passes, %", "Accurate progressive passes, %", "Third assists per 90", "xA per 90"],
+    'Lateral Derecho': ["Matches played", "Minutes played", "Successful attacking actions per 90", 
+                        "Successful defensive actions per 90", "Accelerations per 90", "Progressive runs per 90", 
+                        "Crosses to goalie box per 90", "Aerial duels won, %", "Offensive duels won, %", 
+                        "Defensive duels won, %", "Defensive duels per 90", "Duels won, %", 
+                        "Interceptions per 90", "Passes per 90", "Forward passes per 90", 
+                        "Accurate passes to penalty area, %", "Received passes per 90", 
+                        "Accurate passes to final third, %", "Accurate through passes, %", 
+                        "Accurate forward passes, %", "Accurate progressive passes, %", "Third assists per 90", "xA per 90"],
+    'Mediocampista Defensivo': ["Matches played", "Minutes played", "Assists per 90", "xA per 90", "Offensive duels won, %", 
+                                "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", 
+                                "Received passes per 90", "Accurate short / medium passes, %", 
+                                "Accurate passes to final third, %", "Accurate long passes, %", 
+                                "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
+    'Mediocampista Central': ["Matches played", "Minutes played", "Assists per 90", "xA per 90", "Offensive duels won, %", 
+                              "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", 
+                              "Received passes per 90", "Accurate short / medium passes, %", 
+                              "Accurate passes to final third, %", "Accurate long passes, %", 
+                              "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
+    'Mediocampista Ofensivo': ["Matches played", "Minutes played", "Assists per 90", "xA per 90", "Offensive duels won, %", 
+                               "Aerial duels won, %", "Defensive duels won, %", "Interceptions per 90", 
+                               "Received passes per 90", "Accurate short / medium passes, %", 
+                               "Accurate passes to final third, %", "Accurate long passes, %", 
+                               "Accurate progressive passes, %", "Successful dribbles, %", "xG per 90", "Goals per 90"],
+    'Extremos': ["Matches played", "Minutes played", "xG per 90", "Goals per 90", "Assists per 90", 
+                 "xA per 90", "Received passes per 90", "Accurate crosses, %", "Accurate through passes, %", 
+                 "Accurate progressive passes, %", "Crosses to goalie box per 90", "Accurate passes to penalty area, %", 
+                 "Offensive duels won, %", "Defensive duels won, %", "Interceptions per 90", "Successful dribbles, %"],
+    'Delantero': ["Matches played", "Minutes played", "Goals per 90", "Head goals per 90", 
+                  "Non-penalty goals per 90", "Goal conversion, %", "xG per 90", "xA per 90", 
+                  "Assists per 90", "Key passes per 90", "Passes per 90", "Passes to penalty area per 90", 
+                  "Passes to final third per 90", "Accurate passes, %", "Accurate passes to final third, %", 
+                  "Aerial duels won, %", "Duels won, %", "Shots per 90", "Shots on target, %", "Touches in box per 90"]
+}
 
 # Función para cargar los datos desde el session_state
 def get_data():
@@ -19,76 +73,65 @@ else:
     # Crear una columna única para identificar cada combinación jugador/equipo
     df['Jugador_Equipo'] = df['Full name'] + " - " + df['Team within selected timeframe']
     
-    # Lista de métricas permitidas para la comparación
-    metricas_permitidas = [
-        'Duels per 90', 'Duels won, %', 'Successful defensive actions per 90', 'Defensive duels per 90',
-        'Defensive duels won, %', 'Aerial duels per 90', 'Aerial duels won, %', 'Sliding tackles per 90', 
-        'PAdj Sliding tackles', 'Shots blocked per 90', 'Interceptions per 90', 'PAdj Interceptions', 
-        'Fouls per 90', 'Yellow cards', 'Yellow cards per 90', 'Red cards', 'Red cards per 90', 
-        'Successful attacking actions per 90', 'Goals per 90', 'Non-penalty goals', 'Non-penalty goals per 90', 
-        'xG per 90', 'Head goals', 'Head goals per 90', 'Shots', 'Shots per 90', 'Shots on target, %', 
-        'Goal conversion, %', 'Assists per 90', 'Crosses per 90', 'Accurate crosses, %', 'Crosses from left flank per 90', 
-        'Accurate crosses from left flank, %', 'Crosses from right flank per 90', 'Accurate crosses from right flank, %', 
-        'Crosses to goalie box per 90', 'Dribbles per 90', 'Successful dribbles, %', 'Offensive duels per 90', 
-        'Offensive duels won, %', 'Touches in box per 90', 'Progressive runs per 90', 'Accelerations per 90', 
-        'Received passes per 90', 'Received long passes per 90', 'Fouls suffered per 90', 'Passes per 90', 
-        'Accurate passes, %', 'Forward passes per 90', 'Accurate forward passes, %', 'Back passes per 90', 
-        'Accurate back passes, %', 'Short / medium passes per 90', 'Accurate short / medium passes, %', 
-        'Long passes per 90', 'Accurate long passes, %', 'Average pass length, m', 'Average long pass length, m', 
-        'xA per 90', 'Shot assists per 90', 'Second assists per 90', 'Third assists per 90', 'Smart passes per 90', 
-        'Accurate smart passes, %', 'Key passes per 90', 'Passes to final third per 90', 
-        'Accurate passes to final third, %', 'Passes to penalty area per 90', 'Accurate passes to penalty area, %', 
-        'Through passes per 90', 'Accurate through passes, %', 'Deep completions per 90', 'Deep completed crosses per 90', 
-        'Progressive passes per 90', 'Accurate progressive passes, %', 'Accurate vertical passes, %', 
-        'Vertical passes per 90', 'Conceded goals', 'Conceded goals per 90', 'Shots against', 'Shots against per 90', 
-        'Clean sheets', 'Save rate, %', 'xG against', 'xG against per 90', 'Prevented goals', 'Prevented goals per 90', 
-        'Back passes received as GK per 90', 'Exits per 90', 'Aerial duels per 90.1', 'Free kicks per 90', 
-        'Direct free kicks per 90', 'Direct free kicks on target, %', 'Corners per 90', 'Penalties taken', 
-        'Penalty conversion, %'
-    ]
-
     st.title("Comparador de Similitud de Jugadores")
 
     # Paso 1: Seleccionar jugador/equipo (combinación única)
     jugador_equipo = st.selectbox("Selecciona un jugador/equipo", df['Jugador_Equipo'].unique())
-    df_jugador = df[df['Jugador_Equipo'] == jugador_equipo].copy()  # DataFrame solo con el jugador/equipo seleccionado
+    df_jugador = df[df['Jugador_Equipo'] == jugador_equipo].copy()
 
-    # Verificar si el jugador fue encontrado en los datos
     if df_jugador.empty:
         st.warning(f"No se encontró el jugador '{jugador_equipo}' en los datos originales.")
     else:
-        # Paso 2: Crear un DataFrame df_restantes excluyendo al jugador/equipo seleccionado
-        df_restantes = df[df['Jugador_Equipo'] != jugador_equipo].copy()
+        # Paso 2: Filtro de posición y obtención de métricas específicas
+        posiciones = list(metrics_by_position.keys())
+        selected_position = st.selectbox("Selecciona la posición del jugador", posiciones)
+        metricas_seleccionadas = metrics_by_position[selected_position]
 
-        # Paso 3: Filtrar jugadores por rango de edad solo en df_restantes
-        if 'Age' in df.columns:
-            min_age, max_age = int(df['Age'].min()), int(df['Age'].max())
-            selected_age_range = st.slider("Seleccione el rango de edad", min_value=min_age, max_value=max_age, value=(min_age, max_age))
-            df_restantes = df_restantes[(df_restantes['Age'] >= selected_age_range[0]) & (df_restantes['Age'] <= selected_age_range[1])]
+        # Paso 3: Filtrar jugadores restantes por posición
+        if selected_position == 'Portero':
+            df_restantes = df[df['Position'].str.contains('GK', na=False)]
+        elif selected_position == 'Defensa':
+            df_restantes = df[df['Position'].str.contains('CB', na=False)]
+        elif selected_position == 'Lateral Izquierdo':
+            df_restantes = df[df['Position'].str.contains('LB|LWB', na=False)]
+        elif selected_position == 'Lateral Derecho':
+            df_restantes = df[df['Position'].str.contains('RB|RWB', na=False)]
+        elif selected_position == 'Mediocampista Defensivo':
+            df_restantes = df[df['Position'].str.contains('DMF', na=False)]
+        elif selected_position == 'Mediocampista Central':
+            df_restantes = df[df['Position'].str.contains('CMF', na=False)]
+        elif selected_position == 'Mediocampista Ofensivo':
+            df_restantes = df[df['Position'].str.contains('AMF', na=False)]
+        elif selected_position == 'Extremos':
+            df_restantes = df[df['Position'].str.contains('RW|LW|LWF|RWF', na=False)]
+        elif selected_position == 'Delantero':
+            df_restantes = df[df['Position'].str.contains('CF', na=False)]
         else:
-            st.warning("No se encontraron datos de edad en los archivos.")
+            df_restantes = df.copy()  # Si no hay un filtro válido, no se aplica ningún filtro
 
-        # Paso 4: Filtrar por pasaporte en df_restantes
+        # Paso 4: Filtrar por pasaporte
         if 'Passport country' in df.columns:
-            input_passport = st.text_input("Filtrar por pasaporte (ej. 'Argentina')", "")
+            input_passport = st.text_input("Filtrar por país de pasaporte (ej. 'Argentina')", "")
             if input_passport:
                 df_restantes = df_restantes[df_restantes['Passport country'].str.contains(input_passport, case=False, na=False)]
-        
-        # Seleccionar las métricas para la comparación
-        metricas_seleccionadas = st.multiselect("Selecciona las métricas para la comparación", metricas_permitidas, default=metricas_permitidas[:5])
+
+        # Paso 5: Normalización y comparación
+        scaler = StandardScaler()
         df_restantes[metricas_seleccionadas] = df_restantes[metricas_seleccionadas].fillna(0)
         df_jugador[metricas_seleccionadas] = df_jugador[metricas_seleccionadas].fillna(0)
 
-        # Normalizar los datos de df_restantes y del jugador/equipo seleccionado
-        scaler = StandardScaler()
-        df_scaled = pd.DataFrame(scaler.fit_transform(df_restantes[metricas_seleccionadas]), columns=metricas_seleccionadas, index=df_restantes.index)
+        df_scaled = pd.DataFrame(
+            scaler.fit_transform(df_restantes[metricas_seleccionadas]),
+            columns=metricas_seleccionadas,
+            index=df_restantes.index
+        )
         jugador_scaled = scaler.transform(df_jugador[metricas_seleccionadas])
 
-        # Calcular distancias y similitudes
+        # Calcular similitudes
         distancias_euclid = euclidean_distances(jugador_scaled, df_scaled).flatten()
         similitudes_coseno = cosine_similarity(jugador_scaled, df_scaled).flatten()
 
-        # Calcular porcentaje de similitud
+        # Calcular porcentajes
         max_dist = distancias_euclid.max()
         df_restantes['Similitud Euclídea (%)'] = (1 - (distancias_euclid / max_dist)) * 100
         df_restantes['Similitud Coseno (%)'] = similitudes_coseno * 100
@@ -97,16 +140,11 @@ else:
         similares_euclid = df_restantes[['Full name', 'Age', 'Team within selected timeframe', 'Similitud Euclídea (%)']].sort_values('Similitud Euclídea (%)', ascending=False).head(10)
         similares_coseno = df_restantes[['Full name', 'Age', 'Team within selected timeframe', 'Similitud Coseno (%)']].sort_values('Similitud Coseno (%)', ascending=False).head(10)
 
-        # Mostrar tablas de resultados
         col1, col2 = st.columns(2)
-        
         with col1:
             st.subheader(f"Jugadores más similares a {jugador_equipo} (Distancia Euclídea)")
             st.dataframe(similares_euclid)
-            st.markdown("""La distancia euclídea mide la distancia "común" entre los valores de las métricas de dos jugadores. Si dos jugadores tienen valores de métricas cercanos, serán considerados similares.""")
 
-        
         with col2:
             st.subheader(f"Jugadores más similares a {jugador_equipo} (Distancia Coseno)")
             st.dataframe(similares_coseno)
-            st.markdown("""La distancia coseno mide el ángulo entre los vectores de las métricas de dos jugadores. Esto significa que un jugador con menos minutos jugados puede parecer similar a otro con más minutos jugados si sus valores de métricas están en la misma dirección.""")

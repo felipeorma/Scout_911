@@ -1,5 +1,5 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 # Configurar la página en formato "wide"
 st.set_page_config(page_title="911_Scout/Busqueda", page_icon="🔎", layout="wide")
@@ -109,14 +109,22 @@ def busqueda():
         st.warning("No se encontraron datos de pasaporte en los archivos.")
 
     # Selección de las columnas específicas
-    columnas_mostradas = ['Full name', 'Team within selected timeframe', 'Age', 'Position', 'Passport country',
+    columnas_mostradas = ['Team logo', 'Full name', 'Team within selected timeframe', 'Age', 'Position', 'Passport country',
                           'Defensive duels per 90', 'Defensive duels won, %', 'Offensive duels per 90', 'Offensive duels won, %']
 
     if set(columnas_mostradas).issubset(df.columns):
-        df_filtered_columns = df[columnas_mostradas]
-        
-        # Mostrar los datos en formato de data_editor
-        st.data_editor(df_filtered_columns)
+        df = df[columnas_mostradas]
+
+        # Mostrar los datos en formato de data_editor con imágenes
+        st.data_editor(
+            df,
+            column_config={
+                "Team logo": st.column_config.ImageColumn(
+                    "Team Logo", help="Team logos of players", width="100px"
+                ),
+            },
+            hide_index=True,
+        )
     else:
         st.warning("Algunas de las columnas necesarias no están presentes en los datos.")
 

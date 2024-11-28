@@ -18,6 +18,8 @@ from mplsoccer import PyPizza
 from scipy.stats import percentileofscore
 from io import BytesIO
 from scipy import stats
+from math import pi
+from matplotlib.patches import FancyArrowPatch
 
 # Diccionario de métricas por posición
 metrics_by_position = {
@@ -629,62 +631,61 @@ def main_page():
 ################################################## BUSCAR ##################################################
 ############################################################################################################
 
+import streamlit as st
+
 def search_page():
     st.title("Buscar Jugadores ⚽️")
+
     if "filtered_data" in st.session_state:
         data = st.session_state["filtered_data"]
 
-        # Filtros organizados
-        col1, col2, col3, col4 = st.columns(4)
+        # Barra lateral para filtros
+        st.sidebar.header("Filtros de Búsqueda")
 
         # Filtro de temporada
-        with col1:
-            selected_seasons = st.multiselect(
-                "Selecciona las temporadas:",
-                options=sorted(data["Season"].dropna().unique().tolist()),
-                default=sorted(data["Season"].dropna().unique().tolist()),
-                key="season_filter"
-            )
+        selected_seasons = st.sidebar.multiselect(
+            "Selecciona las temporadas:",
+            options=sorted(data["Season"].dropna().unique().tolist()),
+            default=sorted(data["Season"].dropna().unique().tolist()),
+            key="season_filter"
+        )
 
         # Filtrar datos según las temporadas seleccionadas
         filtered_data = data[data["Season"].isin(selected_seasons)]
 
         # Filtro de competición
-        with col2:
-            available_competitions = sorted(filtered_data["Competition"].dropna().unique().tolist())
-            selected_competitions = st.multiselect(
-                "Selecciona las competiciones:",
-                options=["Todos"] + available_competitions,
-                default="Todos",
-                key="competition_filter"
-            )
+        available_competitions = sorted(filtered_data["Competition"].dropna().unique().tolist())
+        selected_competitions = st.sidebar.multiselect(
+            "Selecciona las competiciones:",
+            options=["Todos"] + available_competitions,
+            default="Todos",
+            key="competition_filter"
+        )
 
         # Filtrar datos según las competiciones seleccionadas
         if "Todos" not in selected_competitions:
             filtered_data = filtered_data[filtered_data["Competition"].isin(selected_competitions)]
 
         # Filtro de equipo
-        with col3:
-            available_teams = sorted(filtered_data["Team within selected timeframe"].dropna().unique().tolist())
-            selected_teams = st.multiselect(
-                "Selecciona los equipos:",
-                options=["Todos"] + available_teams,
-                default="Todos",
-                key="team_filter"
-            )
+        available_teams = sorted(filtered_data["Team within selected timeframe"].dropna().unique().tolist())
+        selected_teams = st.sidebar.multiselect(
+            "Selecciona los equipos:",
+            options=["Todos"] + available_teams,
+            default="Todos",
+            key="team_filter"
+        )
 
         # Filtrar datos según los equipos seleccionados
         if "Todos" not in selected_teams:
             filtered_data = filtered_data[filtered_data["Team within selected timeframe"].isin(selected_teams)]
 
         # Filtro de rango de edad
-        with col4:
-            min_age, max_age = filtered_data["Age"].min(), filtered_data["Age"].max()
-            age_range = st.slider(
-                "Rango de edades:",
-                int(min_age), int(max_age), (int(min_age), int(max_age)),
-                key="age_filter"
-            )
+        min_age, max_age = filtered_data["Age"].min(), filtered_data["Age"].max()
+        age_range = st.sidebar.slider(
+            "Rango de edades:",
+            int(min_age), int(max_age), (int(min_age), int(max_age)),
+            key="age_filter"
+        )
 
         # Filtrar datos según el rango de edad seleccionado
         filtered_data = filtered_data[
@@ -692,27 +693,25 @@ def search_page():
             (filtered_data["Age"] <= age_range[1])
         ]
 
-        # Filtros adicionales organizados en una fila
-        col5, col6 = st.columns(2)
+        # Filtros adicionales en la barra lateral
+        st.sidebar.header("Filtros Adicionales")
 
         # Filtro de minutos jugados
-        with col5:
-            min_minutes, max_minutes = filtered_data["Minutes played"].min(), filtered_data["Minutes played"].max()
-            minutes_range = st.slider(
-                "Rango de minutos jugados:",
-                int(min_minutes), int(max_minutes), (int(min_minutes), int(max_minutes)),
-                key="minutes_filter"
-            )
+        min_minutes, max_minutes = filtered_data["Minutes played"].min(), filtered_data["Minutes played"].max()
+        minutes_range = st.sidebar.slider(
+            "Rango de minutos jugados:",
+            int(min_minutes), int(max_minutes), (int(min_minutes), int(max_minutes)),
+            key="minutes_filter"
+        )
 
         # Filtro de pierna dominante
-        with col6:
-            available_feet = sorted(filtered_data["Foot"].dropna().unique().tolist())
-            selected_feet = st.multiselect(
-                "Pierna dominante:",
-                options=["Todos"] + available_feet,
-                default="Todos",
-                key="foot_filter"
-            )
+        available_feet = sorted(filtered_data["Foot"].dropna().unique().tolist())
+        selected_feet = st.sidebar.multiselect(
+            "Pierna dominante:",
+            options=["Todos"] + available_feet,
+            default="Todos",
+            key="foot_filter"
+        )
 
         # Aplicar filtros finales
         filtered_data = filtered_data[
@@ -829,47 +828,50 @@ def similarity_page():
     if "filtered_data" in st.session_state and not st.session_state["filtered_data"].empty:
         data = st.session_state["filtered_data"]
 
-        # Crear filtros
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            player_to_compare = st.selectbox(
-                "Jugador de referencia:",
-                options=sorted(data["Full name"].dropna().unique().tolist())
-            )
-        with col2:
-            selected_position = st.selectbox(
-                "Posición:",
-                options=["Todos"] + list(metrics_by_position.keys())
-            )
-        with col3:
-            selected_seasons = st.multiselect(
-                "Temporadas:",
-                options=sorted(data["Season"].dropna().unique().tolist()),
-                default=sorted(data["Season"].dropna().unique().tolist())
-            )
-        with col4:
-            selected_competitions = st.multiselect(
-                "Competencias:",
-                options=["Todos"] + sorted(data["Competition"].dropna().unique().tolist()),
-                default="Todos"
-            )
-        with col5:
-            passport_country = st.text_input("País de pasaporte (parcial o completo):", value="")
+        # Barra lateral para filtros
+        st.sidebar.header("Filtros de Búsqueda")
 
-        # Filtros adicionales
-        col6, col7, col8 = st.columns(3)
-        with col6:
-            min_age, max_age = int(data["Age"].min()), int(data["Age"].max())
-            age_range = st.slider("Rango de edades:", min_age, max_age, (min_age, max_age))
-        with col7:
-            min_minutes, max_minutes = int(data["Minutes played"].min()), int(data["Minutes played"].max())
-            minutes_range = st.slider("Rango de minutos jugados:", min_minutes, max_minutes, (min_minutes, max_minutes))
-        with col8:
-            dominant_foot = st.multiselect(
-                "Pierna dominante:",
-                options=["Todos"] + sorted(data["Foot"].dropna().unique().tolist()),
-                default="Todos"
-            )
+        # Filtro de jugador de referencia
+        player_to_compare = st.sidebar.selectbox(
+            "Jugador de referencia:",
+            options=sorted(data["Full name"].dropna().unique().tolist())
+        )
+
+        # Filtro de posición
+        selected_position = st.sidebar.selectbox(
+            "Posición:",
+            options=["Todos"] + list(metrics_by_position.keys())
+        )
+
+        # Filtro de temporadas
+        selected_seasons = st.sidebar.multiselect(
+            "Temporadas:",
+            options=sorted(data["Season"].dropna().unique().tolist()),
+            default=sorted(data["Season"].dropna().unique().tolist())
+        )
+
+        # Filtro de competencias
+        selected_competitions = st.sidebar.multiselect(
+            "Competencias:",
+            options=["Todos"] + sorted(data["Competition"].dropna().unique().tolist()),
+            default="Todos"
+        )
+
+        # Filtro de país de pasaporte
+        passport_country = st.sidebar.text_input("País de pasaporte (parcial o completo):", value="")
+
+        # Filtros adicionales en la barra lateral
+        min_age, max_age = int(data["Age"].min()), int(data["Age"].max())
+        age_range = st.sidebar.slider("Rango de edades:", min_age, max_age, (min_age, max_age))
+
+        min_minutes, max_minutes = int(data["Minutes played"].min()), int(data["Minutes played"].max())
+        minutes_range = st.sidebar.slider("Rango de minutos jugados:", min_minutes, max_minutes, (min_minutes, max_minutes))
+
+        dominant_foot = st.sidebar.multiselect(
+            "Pierna dominante:",
+            options=["Todos"] + sorted(data["Foot"].dropna().unique().tolist()),
+            default="Todos"
+        )
 
         # Filtrar datos
         filtered_data = data.copy()
@@ -983,61 +985,42 @@ def density_page():
     if "filtered_data" in st.session_state:
         data = st.session_state["filtered_data"]
 
-        # Filtrar datos según las selecciones
+        # Mover los filtros a la barra lateral
+        st.sidebar.write("### Filtros de Selección")
+
+        # Filtro de temporada
+        available_seasons = ["Todos"] + sorted(data["Season"].dropna().unique().tolist())
+        selected_season = st.sidebar.selectbox("Selecciona la temporada:", options=available_seasons, index=0)
+
+        # Filtro de competiciones basadas en la temporada
         filtered_data = data.copy()
+        if selected_season != "Todos":
+            filtered_data = filtered_data[filtered_data["Season"] == selected_season]
 
-        # Filtros organizados en dos columnas
-        col1, col2 = st.columns(2)
+        available_competitions = ["Todos"] + sorted(filtered_data["Competition"].dropna().unique().tolist())
+        selected_competition = st.sidebar.selectbox("Selecciona la competición:", options=available_competitions, index=0)
 
-        with col1:
-            # Filtro de temporada
-            available_seasons = ["Todos"] + sorted(data["Season"].dropna().unique().tolist())
-            selected_season = st.selectbox("Selecciona la temporada:", options=available_seasons, index=0)
+        if selected_competition != "Todos":
+            filtered_data = filtered_data[filtered_data["Competition"] == selected_competition]
 
-            # Filtrar datos según la temporada seleccionada
-            if selected_season != "Todos":
-                filtered_data = filtered_data[filtered_data["Season"] == selected_season]
+        # Filtro de equipos basados en la competición
+        available_teams = ["Todos"] + sorted(filtered_data["Team within selected timeframe"].dropna().unique().tolist())
+        selected_team = st.sidebar.selectbox("Selecciona el equipo:", options=available_teams, index=0)
 
-            # Filtro de competiciones basadas en la temporada
-            available_competitions = ["Todos"] + sorted(filtered_data["Competition"].dropna().unique().tolist())
-            selected_competition = st.selectbox("Selecciona la competición:", options=available_competitions, index=0)
+        if selected_team != "Todos":
+            filtered_data = filtered_data[filtered_data["Team within selected timeframe"] == selected_team]
 
-            # Filtrar datos según la competición seleccionada
-            if selected_competition != "Todos":
-                filtered_data = filtered_data[filtered_data["Competition"] == selected_competition]
+        # Filtro de jugadores basado en el equipo seleccionado
+        available_players = sorted(filtered_data["Full name"].dropna().unique().tolist())
+        if not available_players:
+            st.warning("No hay jugadores disponibles para la selección actual.")
+            return
 
-            # Filtro de equipos basados en la competición
-            available_teams = ["Todos"] + sorted(filtered_data["Team within selected timeframe"].dropna().unique().tolist())
-            selected_team = st.selectbox("Selecciona el equipo:", options=available_teams, index=0)
+        jugador_objetivo = st.sidebar.selectbox("Selecciona el primer jugador:", available_players, index=0)
+        jugador_comparacion = st.sidebar.selectbox("Selecciona el jugador para comparar:", available_players, index=0)
 
-            # Filtrar datos según el equipo seleccionado
-            if selected_team != "Todos":
-                filtered_data = filtered_data[filtered_data["Team within selected timeframe"] == selected_team]
-
-        with col2:
-            # Filtro de jugadores basado en el equipo seleccionado
-            available_players = sorted(filtered_data["Full name"].dropna().unique().tolist())
-            if not available_players:
-                st.warning("No hay jugadores disponibles para la selección actual.")
-                return
-
-            jugador_objetivo = st.selectbox(
-                "Selecciona el primer jugador:",
-                available_players,
-                index=0
-            )
-
-            jugador_comparacion = st.selectbox(
-                "Selecciona el jugador para comparar:",
-                available_players,
-                index=0
-            )
-
-            # Filtro de posición general
-            posicion_general = st.selectbox(
-                "Selecciona la posición general de los jugadores:",
-                list(metrics_by_position.keys())
-            )
+        # Filtro de posición general
+        posicion_general = st.sidebar.selectbox("Selecciona la posición general de los jugadores:", list(metrics_by_position.keys()))
 
         # Obtener métricas basadas en la posición seleccionada
         metricas = metrics_by_position[posicion_general]
@@ -1115,88 +1098,82 @@ def scatter_plot_interactive():
     if "filtered_data" in st.session_state and not st.session_state["filtered_data"].empty:
         data = st.session_state["filtered_data"]
 
-        # Filtros organizados en filas
-        with st.container():
-            col1, col2, col3 = st.columns(3)
+        # Filtros en la barra lateral
+        with st.sidebar:
+            st.header("Filtros")
 
             # Filtro de temporada
-            with col1:
-                seasons = ['Todos'] + sorted(data['Season'].dropna().unique())
-                selected_season = st.selectbox(
-                    "Temporada",
-                    options=seasons,
-                    index=seasons.index("2024") if "2024" in seasons else 0
-                )
-                if selected_season != 'Todos':
-                    data = data[data['Season'] == selected_season]
+            seasons = ['Todos'] + sorted(data['Season'].dropna().unique())
+            selected_season = st.selectbox(
+                "Temporada",
+                options=seasons,
+                index=seasons.index("2024") if "2024" in seasons else 0
+            )
+            if selected_season != 'Todos':
+                data = data[data['Season'] == selected_season]
 
             # Filtro de competición
-            with col2:
-                competitions = ['Todos'] + sorted(data['Competition'].dropna().unique())
-                selected_competition = st.selectbox(
-                    "Competición",
-                    options=competitions,
-                    index=competitions.index("Peruvian Liga 1 2024") if "Peruvian Liga 1 2024" in competitions else 0
-                )
-                if selected_competition != 'Todos':
-                    data = data[data['Competition'] == selected_competition]
+            competitions = ['Todos'] + sorted(data['Competition'].dropna().unique())
+            selected_competition = st.selectbox(
+                "Competición",
+                options=competitions,
+                index=competitions.index("Peruvian Liga 1 2024") if "Peruvian Liga 1 2024" in competitions else 0
+            )
+            if selected_competition != 'Todos':
+                data = data[data['Competition'] == selected_competition]
 
             # Filtro de equipo
-            with col3:
-                teams = ['Todos'] + sorted(data['Team within selected timeframe'].dropna().unique())
-                selected_team = st.selectbox(
-                    "Equipo durante el periodo seleccionado",
-                    options=teams,
-                    index=teams.index("Deportivo Garcilaso") if "Deportivo Garcilaso" in teams else 0
-                )
-                if selected_team != 'Todos':
-                    data = data[data['Team within selected timeframe'] == selected_team]
+            teams = ['Todos'] + sorted(data['Team within selected timeframe'].dropna().unique())
+            selected_team = st.selectbox(
+                "Equipo durante el periodo seleccionado",
+                options=teams,
+                index=teams.index("Deportivo Garcilaso") if "Deportivo Garcilaso" in teams else 0
+            )
+            if selected_team != 'Todos':
+                data = data[data['Team within selected timeframe'] == selected_team]
 
-        # Filtro de minutos jugados y pierna dominante en la misma fila
-        with st.container():
-            col1, col2 = st.columns(2)
+            # Filtro de minutos jugados y pierna dominante
+            st.subheader("Filtros Adicionales")
 
             # Filtro de minutos jugados
-            with col1:
-                if 'Minutes played' in data.columns:
-                    min_minutes, max_minutes = int(data['Minutes played'].min()), int(data['Minutes played'].max())
-                    selected_minutes = st.slider(
-                        "Rango de minutos jugados",
-                        min_minutes,
-                        max_minutes,
-                        (1000, max_minutes) if min_minutes <= 1000 else (min_minutes, max_minutes)
-                    )
-                    data = data[(data['Minutes played'] >= selected_minutes[0]) & (data['Minutes played'] <= selected_minutes[1])]
+            if 'Minutes played' in data.columns:
+                min_minutes, max_minutes = int(data['Minutes played'].min()), int(data['Minutes played'].max())
+                selected_minutes = st.slider(
+                    "Rango de minutos jugados",
+                    min_minutes,
+                    max_minutes,
+                    (1000, max_minutes) if min_minutes <= 1000 else (min_minutes, max_minutes)
+                )
+                data = data[(data['Minutes played'] >= selected_minutes[0]) & (data['Minutes played'] <= selected_minutes[1])]
 
             # Filtro de pierna dominante
-            with col2:
-                if 'Foot' in data.columns:
-                    foot_options = ['Todos'] + data['Foot'].dropna().unique().tolist()
-                    selected_foot = st.selectbox("Pierna dominante", options=foot_options)
-                    if selected_foot != 'Todos':
-                        data = data[data['Foot'] == selected_foot]
+            if 'Foot' in data.columns:
+                foot_options = ['Todos'] + data['Foot'].dropna().unique().tolist()
+                selected_foot = st.selectbox("Pierna dominante", options=foot_options)
+                if selected_foot != 'Todos':
+                    data = data[data['Foot'] == selected_foot]
 
-        # Filtro de posición
-        st.write("### Filtrar por posición:")
-        position_filters = {
-            'Todos': '',
-            'Portero': 'GK',
-            'Defensa': 'CB',
-            'Lateral Izquierdo': 'LB|LWB',
-            'Lateral Derecho': 'RB|RWB',
-            'Mediocampista Defensivo': 'DMF',
-            'Mediocampista Central': 'CMF',
-            'Mediocampista Ofensivo': 'AMF',
-            'Extremos': 'RW|LW|LWF|RWF',
-            'Delantero': 'CF'
-        }
-        selected_position = st.selectbox("Posición", options=list(position_filters.keys()))
+            # Filtro de posición
+            st.subheader("Filtrar por posición:")
+            position_filters = {
+                'Todos': '',
+                'Portero': 'GK',
+                'Defensa': 'CB',
+                'Lateral Izquierdo': 'LB|LWB',
+                'Lateral Derecho': 'RB|RWB',
+                'Mediocampista Defensivo': 'DMF',
+                'Mediocampista Central': 'CMF',
+                'Mediocampista Ofensivo': 'AMF',
+                'Extremos': 'RW|LW|LWF|RWF',
+                'Delantero': 'CF'
+            }
+            selected_position = st.selectbox("Posición", options=list(position_filters.keys()))
 
-        # Filtrar los datos según la posición seleccionada
-        if selected_position in position_filters and position_filters[selected_position]:
-            filtered_data = data[data['Primary position'].str.contains(position_filters[selected_position], na=False)]
-        else:
-            filtered_data = data
+            # Filtrar los datos según la posición seleccionada
+            if selected_position in position_filters and position_filters[selected_position]:
+                filtered_data = data[data['Primary position'].str.contains(position_filters[selected_position], na=False)]
+            else:
+                filtered_data = data
 
         # Verificar si hay datos después del filtro
         if filtered_data.empty:
@@ -1251,6 +1228,8 @@ def scatter_plot_interactive():
 
         # Crear el scatter plot interactivo con Plotly
         st.write("### Gráfico de dispersión interactivo:")
+        
+        # Establecer colores y tamaños personalizados
         fig = px.scatter(
             filtered_data,
             x=x_axis,
@@ -1260,7 +1239,7 @@ def scatter_plot_interactive():
             hover_data=tooltip_vars,
             text='Full name',
             title=f"Scatter Plot Interactivo: {selected_position} - {x_axis} vs {y_axis}",
-            template="plotly_dark",
+            template="plotly",
             width=900,
             height=800,
             color_continuous_scale=['red', 'yellow', 'green']
@@ -1272,10 +1251,21 @@ def scatter_plot_interactive():
             textfont=dict(color='black')
         )
 
+        # Configurar la estética visual del gráfico
+        fig.update_layout(
+            plot_bgcolor='white',  # Fondo blanco
+            showlegend=True,
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=1.02),  # Leyenda al costado
+            margin=dict(l=50, r=150, t=50, b=50),  # Márgenes ajustados
+            xaxis=dict(showgrid=True, gridcolor='LightGray'),  # Rejilla en el eje X
+            yaxis=dict(showgrid=True, gridcolor='LightGray')   # Rejilla en el eje Y
+        )
+
         # Mostrar gráfico
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Por favor, carga los datos primero en la pestaña principal.")
+
 
 ###################################### RADAR ################################################
 #############################################################################################
@@ -1286,22 +1276,22 @@ def radar_page():
     if "filtered_data" in st.session_state and not st.session_state["filtered_data"].empty:
         data = st.session_state["filtered_data"]
 
-        # Filtros de temporada y competición [código previo sin cambios]
+        # Filtros de temporada y competición en la barra lateral
         seasons = data["Season"].unique()
-        selected_season = st.selectbox("Selecciona la temporada", seasons)
+        selected_season = st.sidebar.selectbox("Selecciona la temporada", seasons)
 
         competitions = data[data["Season"] == selected_season]["Competition"].unique()
-        selected_competition = st.selectbox("Selecciona la competición", ["Todos"] + list(competitions))
+        selected_competition = st.sidebar.selectbox("Selecciona la competición", ["Todos"] + list(competitions))
 
         if selected_competition == "Todos":
             filtered_data = data[data["Season"] == selected_season]
         else:
             filtered_data = data[(data["Season"] == selected_season) & (data["Competition"] == selected_competition)]
 
-        # Seleccionar la posición
-        selected_position = st.selectbox("Selecciona la posición", list(metrics_by_position.keys()))
+        # Seleccionar la posición en la barra lateral
+        selected_position = st.sidebar.selectbox("Selecciona la posición", list(metrics_by_position.keys()))
 
-        # Filtrar los jugadores según la posición seleccionada [código previo sin cambios]
+        # Filtrar los jugadores según la posición seleccionada
         if selected_position == 'Portero':
             filtered_data = filtered_data[filtered_data['Primary position'].str.contains('GK', na=False)]
         elif selected_position == 'Defensa':
@@ -1323,10 +1313,10 @@ def radar_page():
         else:
             filtered_data = filtered_data
 
-        # Agregar slider para minutos jugados
+        # Agregar slider para minutos jugados en la barra lateral
         min_minutes = int(filtered_data['Minutes played'].min())
         max_minutes = int(filtered_data['Minutes played'].max())
-        min_minutes_filter = st.slider(
+        min_minutes_filter = st.sidebar.slider(
             "Filtrar por minutos jugados mínimos",
             min_value=min_minutes,
             max_value=max_minutes,
@@ -1422,12 +1412,12 @@ def radar_page():
                         straight_line_lw=1,
                         last_circle_lw=0,
                         other_circle_lw=0,
-                        inner_circle_size=20
+                        inner_circle_size=18
                     )
 
                     fig, ax = baker.make_pizza(
                         values,
-                        figsize=(10, 8.5),
+                        figsize=(8, 6.5),
                         color_blank_space="same",
                         slice_colors=slice_colors,
                         value_colors=["#F2F2F2"] * len(values),
@@ -1463,26 +1453,19 @@ def radar_page():
                     # Agregar título y subtítulos
                     fig.text(0.5, 1.01, f"{selected_player} | {int(jugador_data['Age'].iloc[0])} años | {jugador_data['Team within selected timeframe'].iloc[0]}", 
                             size=16, ha="center", color="#000000")
-                    fig.text(0.5, 0.98, f"{jugador_data['Foot'].iloc[0]} | {int(jugador_data['Minutes played'].iloc[0])} minutos | Comparado con {total_players} {selected_position.lower()}s", 
-                            size=14, ha="center", color="#000000")
-
-                    if selected_competition == "Todos":
-                        fig.text(0.5, 0.95, f"Temporada {selected_season}", 
-                                size=12, ha="center", color="#000000")
-                    else:
-                        fig.text(0.5, 0.95, f"{selected_competition} | Temporada {selected_season}", 
-                                size=12, ha="center", color="#000000")
-
-                    # Mostrar el gráfico en Streamlit
+                    fig.text(0.5, 0.98, f"{jugador_data['Foot'].iloc[0]} | {int(jugador_data['Minutes played'].iloc[0])} minutos | Comparado con {total_players} {selected_position}s", 
+                            size=10, ha="center", color="#888888")
                     st.pyplot(fig)
+                    
                 else:
-                    st.warning("Por favor, selecciona al menos una métrica para visualizar el radar.")
+                    st.warning("Selecciona al menos una métrica para mostrar el gráfico.")
             else:
-                st.warning("No se encontraron datos para el jugador seleccionado.")
+                st.warning("Jugador no encontrado.")
         else:
-            st.warning(f"No se encontraron {selected_position.lower()}s con {min_minutes_filter} o más minutos jugados en el periodo seleccionado.")
+            st.warning("No hay jugadores que coincidan con los filtros seleccionados.")
     else:
-        st.warning("Por favor, carga los datos primero en la pestaña principal.")
+        st.warning("Cargando los datos...")
+
 
 ################################# BEESWARMS ###################################################
 ###############################################################################################
@@ -1598,25 +1581,237 @@ def create_beeswarm_plot():
 
 ###############################################################################################
 
+def create_scatter_plot():
+    if 'filtered_data' not in st.session_state:
+        return
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-    "Cargar Datos 🏆", "Buscar 🔎", "Comparar ⚖️", "Similitud 🥇🥈🥉", "Densidad 📊", "Dispersión 🎯", "Percentiles 📊", "Besswarms"
-])
+    df = st.session_state['filtered_data']
+    
+    # Mover los filtros a la barra lateral
+    with st.sidebar:
+        seasons = ['Todas'] + list(df['Season'].unique())
+        selected_season = st.selectbox('Temporada:', seasons)
 
-with tab1:
-    main_page()
-with tab2:
-    search_page()
-with tab3:
-    comparison_page()
-with tab4:
-    similarity_page()
-with tab5:
-    density_page()
-with tab6:
-    scatter_plot_interactive()
-with tab7:
-    radar_page()
-with tab8:
-    create_beeswarm_plot()
+    filtered_df = df if selected_season == 'Todas' else df[df['Season'] == selected_season].copy()
+    
+    with st.sidebar:
+        competitions = ['Todas'] + list(filtered_df['Competition'].unique())
+        selected_competition = st.selectbox('Competición:', competitions)
+    
+    if selected_competition != 'Todas':
+        filtered_df = filtered_df[filtered_df['Competition'] == selected_competition]
+    
+    with st.sidebar:
+        teams = list(filtered_df['Team within selected timeframe'].unique())
+        selected_teams = st.multiselect('Equipos:', teams)
+    
+    if selected_teams:
+        filtered_df = filtered_df[filtered_df['Team within selected timeframe'].isin(selected_teams)]
 
+    with st.sidebar:
+        positions = ['Portero', 'Defensa', 'Lateral Izquierdo', 'Lateral Derecho', 
+                    'Mediocampista Defensivo', 'Mediocampista Central', 'Mediocampista Ofensivo',
+                    'Extremos', 'Delantero']
+        selected_positions = st.multiselect('Posiciones:', positions)
+    
+    with st.sidebar:
+        nationalities = ['Todas'] + list(filtered_df['Passport country'].unique())
+        selected_nationality = st.selectbox('Nacionalidad:', nationalities)
+    
+    with st.sidebar:
+        feet = ['Todos'] + list(filtered_df['Foot'].unique())
+        selected_foot = st.selectbox('Pie:', feet)
+
+    min_minutes = int(filtered_df['Minutes played'].min())
+    max_minutes = int(filtered_df['Minutes played'].max())
+    
+    with st.sidebar:
+        selected_minutes = st.slider('Minutos jugados', min_minutes, max_minutes, min_minutes)
+    
+    filtered_df = filtered_df[filtered_df['Minutes played'] >= selected_minutes]
+
+    if selected_nationality != 'Todas':
+        filtered_df = filtered_df[filtered_df['Passport country'] == selected_nationality]
+    
+    if selected_foot != 'Todos':
+        filtered_df = filtered_df[filtered_df['Foot'] == selected_foot]
+
+    position_filters = {
+        'Portero': 'GK', 'Defensa': 'CB', 'Lateral Izquierdo': 'LB|LWB',
+        'Lateral Derecho': 'RB|RWB', 'Mediocampista Defensivo': 'DMF',
+        'Mediocampista Central': 'CMF', 'Mediocampista Ofensivo': 'AMF',
+        'Extremos': 'RW|LW|LWF|RWF', 'Delantero': 'CF'
+    }
+    
+    if selected_positions:
+        position_pattern = '|'.join([position_filters[pos] for pos in selected_positions])
+        filtered_df = filtered_df[filtered_df['Position'].str.contains(position_pattern, na=False)]
+
+    numeric_cols = filtered_df.select_dtypes(include=[np.number]).columns.tolist()
+
+    # Configuración del gráfico
+    col7, col8, col9, col10 = st.columns(4)
+    with col7:
+        x_metric = st.selectbox('Eje X:', numeric_cols)
+    with col8:
+        y_metric = st.selectbox('Eje Y:', numeric_cols)
+    with col9:
+        size_metric = st.selectbox('Tamaño:', ['Minutes played'] + numeric_cols)
+    with col10:
+        color_options = ['Team within selected timeframe'] + numeric_cols
+        color_metric = st.selectbox('Color:', color_options)
+
+    if len(filtered_df) == 0:
+        st.warning('No hay datos para mostrar con los filtros seleccionados.')
+        return
+
+    # Normalizar el tamaño y manejar NaN
+    size_values = filtered_df[size_metric]
+    size_values = size_values.fillna(size_values.mean())  # Reemplazar NaN con la media
+    normalized_size = ((size_values - size_values.min()) / (size_values.max() - size_values.min()) * 30) + 10
+
+    # Crear gráfico con estilo mejorado
+    fig = px.scatter(
+        filtered_df,
+        x=x_metric,
+        y=y_metric,
+        size=normalized_size,
+        color=color_metric,
+        text='Full name',
+        hover_data=['Full name', 'Team within selected timeframe'],
+        title=f'{x_metric} vs {y_metric}',
+        height=800,
+        color_continuous_scale='Viridis'  # Puedes cambiar la paleta de colores
+    )
+    
+    fig.update_traces(
+        marker=dict(
+            line=dict(width=2, color='DarkSlateGray'),  # Bordes de los puntos
+            opacity=0.8  # Opacidad para un mejor estilo visual
+        ),
+        textposition='top center',
+        textfont=dict(size=12, family='Arial')  # Fuente mejorada
+    )
+    
+    fig.update_layout(
+        title_font=dict(size=18, family='Arial, sans-serif', color='rgb(0,0,0)'),
+        showlegend=True,
+        plot_bgcolor='white',
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=1.02),
+        margin=dict(l=50, r=150, t=50, b=50),
+        xaxis=dict(showgrid=True, gridcolor='LightGray', zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor='LightGray', zeroline=False),
+        font=dict(family='Arial, sans-serif', size=14)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+################################################################################################################################
+
+def create_radar_plot():
+    if 'filtered_data' not in st.session_state:
+        return
+
+    df = st.session_state['filtered_data']
+    
+    # Normalizar los datos
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    df[numeric_cols] = (df[numeric_cols] - df[numeric_cols].min()) / (df[numeric_cols].max() - df[numeric_cols].min())
+
+    # Mover los filtros a la barra lateral
+    with st.sidebar:
+        seasons = ['Todas'] + list(df['Season'].unique())
+        selected_season = st.selectbox('Temporada:', seasons, key='radar_plot_season')
+
+    filtered_df = df if selected_season == 'Todas' else df[df['Season'] == selected_season].copy()
+
+    with st.sidebar:
+        competitions = ['Todas'] + list(filtered_df['Competition'].unique())
+        selected_competition = st.selectbox('Competición:', competitions, key='radar_plot_comp')
+
+    if selected_competition != 'Todas':
+        filtered_df = filtered_df[filtered_df['Competition'] == selected_competition]
+
+    with st.sidebar:
+        teams = list(filtered_df['Team within selected timeframe'].unique())
+        selected_teams = st.multiselect('Equipos:', teams, key='radar_plot_teams')
+
+    if selected_teams:
+        filtered_df = filtered_df[filtered_df['Team within selected timeframe'].isin(selected_teams)]
+
+    with st.sidebar:
+        positions = ['Todas', 'Portero', 'Defensa', 'Lateral Izquierdo', 'Lateral Derecho', 
+                    'Mediocampista Defensivo', 'Mediocampista Central', 'Mediocampista Ofensivo',
+                    'Extremos', 'Delantero']
+        selected_position = st.selectbox('Posición:', positions, key='radar_plot_pos')
+
+    if selected_position != 'Todas':
+        position_filters = {
+            'Portero': 'GK', 'Defensa': 'CB', 'Lateral Izquierdo': 'LB|LWB',
+            'Lateral Derecho': 'RB|RWB', 'Mediocampista Defensivo': 'DMF',
+            'Mediocampista Central': 'CMF', 'Mediocampista Ofensivo': 'AMF',
+            'Extremos': 'RW|LW|LWF|RWF', 'Delantero': 'CF'
+        }
+        filtered_df = filtered_df[filtered_df['Position'].str.contains(position_filters[selected_position], na=False)]
+
+    with st.sidebar:
+        min_minutes = int(filtered_df['Minutes played'].min())
+        max_minutes = int(filtered_df['Minutes played'].max())
+        if min_minutes == max_minutes:
+            selected_minutes = min_minutes
+        else:
+            selected_minutes = st.slider('Minutos jugados:', int(min_minutes), int(max_minutes), int(min_minutes), key='radar_plot_minutes')
+        filtered_df = filtered_df[filtered_df['Minutes played'] >= selected_minutes]
+
+    with st.sidebar:
+        players = list(filtered_df['Full name'].unique())
+        selected_players = st.multiselect('Jugadores (máx. 5):', players, max_selections=5, key='radar_plot_players')
+
+    if selected_players:
+        numeric_cols = filtered_df.select_dtypes(include=[np.number]).columns.tolist()
+        selected_metrics = st.multiselect('Métricas a comparar:', numeric_cols, default=numeric_cols[:5] if len(numeric_cols) >= 5 else numeric_cols, key='radar_plot_metrics')
+
+        if selected_metrics:
+            df_radar = filtered_df[filtered_df['Full name'].isin(selected_players)].copy()
+            
+            fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
+            angles = [n / float(len(selected_metrics)) * 2 * pi for n in range(len(selected_metrics))]
+            angles += angles[:1]
+
+            ax.set_theta_offset(pi / 2)
+            ax.set_theta_direction(-1)
+            ax.set_xticks(angles[:-1])
+            ax.set_xticklabels(selected_metrics, size=7)
+            ax.tick_params(axis='x', which='major', pad=7)
+
+            colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231']
+            legend_handles = []
+            for idx, player in enumerate(selected_players):
+                values = df_radar[df_radar['Full name'] == player][selected_metrics].values.flatten().tolist()
+                values += values[:1]
+                line, = ax.plot(angles, values, linewidth=2, linestyle='solid', color=colors[idx])
+                ax.fill(angles, values, colors[idx], alpha=0.2)
+                legend_handles.append(line)
+
+            plt.legend(legend_handles, selected_players, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=5, fontsize=8)
+            plt.subplots_adjust(top=0.85, bottom=0.15)
+            plt.title('Comparación de métricas normalizadas de jugadores', fontsize=14, pad=20)
+            st.pyplot(fig)
+
+################################################################################################################################
+
+tab_functions = {
+    "Cargar Datos 🏆": main_page,
+    "Buscar 🔎": search_page,
+    "Comparar ⚖️": comparison_page,
+    "Similitud 🥇🥈🥉": similarity_page,
+    "Densidad 📊": density_page,
+    "Dispersión 🎯": scatter_plot_interactive,
+    "Percentiles 📊": radar_page,
+    "Besswarms ↔️": create_beeswarm_plot,
+    "Dispersión - Análisis 📈": create_scatter_plot,
+    "Radar Comparativo ⚔️": create_radar_plot
+}
+
+tab_selection = st.sidebar.radio("", list(tab_functions.keys()))
+tab_functions[tab_selection]()

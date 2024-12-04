@@ -964,25 +964,36 @@ def similarity_page():
         # Excluir al jugador seleccionado de los resultados
         similar_players = filtered_data[filtered_data.index != selected_row]
 
-        # Mostrar descripción de las métricas
+        # **Similitud Coseno**
+        st.write("### Jugadores similares a {}".format(player_to_compare))
         st.write("""
-        Similitud Coseno: Esta medida evalúa qué tan similares son dos jugadores en base a sus características, 
+        **Similitud Coseno:** Esta medida evalúa qué tan similares son dos jugadores en base a sus características, 
         como minutos jugados, edad, etc. Calcula el ángulo entre los vectores de características de los jugadores. 
         Mientras más alto es el valor, más similares son los jugadores.
-                 
-        Similitud Euclidiana: Esta medida evalúa la distancia entre dos jugadores en el espacio de características. 
-        Mientras menor es la distancia, más similares son los jugadores. A medida que la distancia disminuye, 
-        el valor de similitud se acerca a 100%..
         """)
 
-        # Mostrar tabla de resultados
-        st.write(f"### Jugadores similares a {player_to_compare}")
-        st.dataframe(
-            similar_players.sort_values(by="Cosine Similarity", ascending=False).head(30)[
-                ["Full name", "Team within selected timeframe", "Season", "Competition", "Minutes played", "Age", "Passport country", "Cosine Similarity", "Euclidean Similarity"]
-            ],
-            use_container_width=True
-        )
+        # Tabla de similitudes Coseno
+        cosine_sorted = similar_players.sort_values(by="Cosine Similarity", ascending=False).head(30)
+        cosine_table = cosine_sorted[
+            ["Player", "Team within selected timeframe", "Season", "Competition", "Minutes played", "Age", "Passport country", "Cosine Similarity"]
+        ]
+        cosine_table = cosine_table.style.background_gradient(subset=["Cosine Similarity"], cmap="Greens", low=0, high=1)
+        st.dataframe(cosine_table)
+
+        # **Similitud Euclidiana**
+        st.write("""
+        **Similitud Euclidiana:** Esta medida evalúa la distancia entre dos jugadores en el espacio de características. 
+        Mientras menor es la distancia, más similares son los jugadores. A medida que la distancia disminuye, 
+        el valor de similitud se acerca a 100%.
+        """)
+
+        # Tabla de similitudes Euclidiana
+        euclidean_sorted = similar_players.sort_values(by="Euclidean Similarity", ascending=False).head(30)
+        euclidean_table = euclidean_sorted[
+            ["Player", "Team within selected timeframe", "Season", "Competition", "Minutes played", "Age", "Passport country", "Euclidean Similarity"]
+        ]
+        euclidean_table = euclidean_table.style.background_gradient(subset=["Euclidean Similarity"], cmap="Blues", low=0, high=1)
+        st.dataframe(euclidean_table)
 
     else:
         st.warning("Primero debes cargar los datos en la pestaña principal.")

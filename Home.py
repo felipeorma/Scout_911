@@ -851,10 +851,12 @@ def similarity_page():
             default=sorted(data["Season"].dropna().unique().tolist())
         )
 
-        # Filtro de competencias
+        # Filtro de competencias (actualizado dependiendo de las temporadas seleccionadas)
+        # Filtrar las competiciones basadas en las temporadas seleccionadas
+        available_competitions = data[data["Season"].isin(selected_seasons)]["Competition"].dropna().unique().tolist()
         selected_competitions = st.sidebar.multiselect(
             "Competencias:",
-            options=["Todos"] + sorted(data["Competition"].dropna().unique().tolist()),
+            options=["Todos"] + sorted(available_competitions),
             default="Todos"
         )
 
